@@ -18,7 +18,7 @@
 .menu-title {
   font-family: "Calibri", sans-serif;
   font-size: 24px;
-  font-weight: 100;
+  font-weight: 400;
   color: #202122;
   margin: 0 0 8px 0;
 }
@@ -32,15 +32,16 @@
 }
 
 .mail {
-  width: 245px;
-  height: 120px;
-  background: #00a400;
+  width: 270px;
+  height: 132px;
+  background: linear-gradient(to bottom, #33cc33, #00a400);
   position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .mail:hover {
-  outline: 2px solid #b0b0b0;
-  background: #00a400;
+  outline: 2px solid #00a400;
+  background: linear-gradient(to bottom, #66ff66, #33cc33);
 }
 
 .mailIcon {
@@ -48,33 +49,34 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font-size: 45px;
+  font-size: 50px;
   color: #fff;
 }
 
 .mailmail {
   color: #fff;
   position: relative;
-  top: 95px;
+  top: 105px;
   left: 15px;
   font-family: "Calibri", sans-serif;
-  font-weight: 100;
-  letter-spacing: 0.8px;
-  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.9px;
+  font-size: 15px;
   cursor: default;
 }
 
 .skype {
-  width: 120px;
-  height: 120px;
-  background: #bc1e49;
+  width: 132px;
+  height: 132px;
+  background: linear-gradient(to bottom, #e6396b, #bc1e49);
   position: relative;
-  top: 5px;
+  top: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .skype:hover {
-  outline: 2px solid #b0b0b0;
-  background: #bc1e49;
+  outline: 2px solid #bc1e49;
+  background: linear-gradient(to bottom, #ff6b9d, #e6396b);
 }
 
 .skypeIcon {
@@ -82,35 +84,36 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 60px;
-  height: 60px;
+  width: 66px;
+  height: 66px;
   filter: brightness(0) invert(1);
 }
 
 .skypeskype {
   color: #fff;
   position: relative;
-  top: 95px;
-  left: 10px;
+  top: 105px;
+  left: 15px;
   font-family: "Calibri", sans-serif;
-  font-weight: 100;
-  font-size: 14px;
-  letter-spacing: 0.8px;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 0.9px;
   cursor: default;
 }
 
 .map {
-  width: 120px;
-  height: 120px;
-  background: #ff8800;
+  width: 132px;
+  height: 132px;
+  background: linear-gradient(to bottom, #ffaa33, #ff8800);
   position: relative;
-  left: 126px;
-  top: -115px;
+  left: 139px;
+  top: -126px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .map:hover {
-  outline: 2px solid #b0b0b0;
-  background: #ff8800;
+  outline: 2px solid #ff8800;
+  background: linear-gradient(to bottom, #ffcc66, #ffaa33);
 }
 
 .mapIcon {
@@ -118,122 +121,36 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 45px;
-  height: 45px;
+  width: 50px;
+  height: 50px;
   color: #fff;
 }
 
 .mapmap {
   color: #fff;
   position: relative;
-  top: 95px;
-  left: 10px;
-  font-family: "Calibri", sans-serif;
-  font-weight: 100;
-  font-size: 14px;
-  letter-spacing: 0.8px;
-  cursor: default;
-}
-
-.read {
-  width: 120px;
-  height: 120px;
-  background: #bc1e49;
-  position: relative;
-  top: -110px;
-}
-
-.read:hover {
-  outline: 2px solid #b0b0b0;
-  background: #bc1e49;
-}
-
-.readIconContainer {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 65px;
-  height: 65px;
-}
-
-.readIcon {
-  width: 100%;
-  height: 100%;
-  filter: brightness(0) invert(1);
-}
-
-.readLockIcon {
-  position: absolute;
-  bottom: -5px;
-  right: -5px;
-  width: 20px;
-  height: 20px;
-  color: #fff;
-  filter: drop-shadow(0 0 0 #ff0000) drop-shadow(0 0 0 #ff0000)
-    drop-shadow(0 0 0 #ff0000) drop-shadow(0 0 0 #ff0000);
-  stroke: #ff0000;
-  stroke-width: 2px;
-  paint-order: stroke fill;
-}
-
-.readread {
-  color: #fff;
-  position: relative;
-  top: 95px;
-  left: 10px;
-  font-family: "Calibri", sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.8px;
-  cursor: default;
-}
-
-.desktop {
-  width: 245px;
-  height: 120px;
-  background: #0079c9;
-  position: relative;
-  top: -105px;
-}
-
-.desktop:hover {
-  outline: 2px solid #b0b0b0;
-  background: #0079c9;
-}
-
-.desktopIcon {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 35px;
-  color: #fff;
-}
-
-.desktopdesktop {
-  color: #fff;
-  position: relative;
-  top: 95px;
+  top: 105px;
   left: 15px;
   font-family: "Calibri", sans-serif;
-  font-weight: 100;
+  font-weight: 400;
+  font-size: 15px;
   letter-spacing: 0.9px;
-  font-size: 13px;
   cursor: default;
 }
 
 .calendar {
-  width: 245px;
-  height: 120px;
-  background: #a400ab;
+  width: 270px;
+  height: 132px;
+  background: linear-gradient(to bottom, #cc00d4, #a400ab);
   position: relative;
-  top: -360px;
-  left: 250px;
+  top: -396px;
+  left: 275px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .calendar:hover {
-  outline: 2px solid #b0b0b0;
-  background: #a400ab;
+  outline: 2px solid #a400ab;
+  background: linear-gradient(to bottom, #ff33ff, #cc00d4);
 }
 
 .calendarIcon {
@@ -241,8 +158,8 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 60px;
-  height: 60px;
+  width: 66px;
+  height: 66px;
   filter: brightness(0) invert(1);
 }
 
@@ -253,27 +170,28 @@
 .calendarDay {
   color: #ffffff;
   position: relative;
-  top: 95px;
+  top: 105px;
   left: 15px;
   font-family: "Calibri", sans-serif;
-  font-weight: 100;
-  letter-spacing: 0.8px;
-  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.9px;
+  font-size: 15px;
   cursor: default;
 }
 
 .sports {
-  width: 245px;
-  height: 245px;
-  background: #61b8fa;
+  width: 270px;
+  height: 270px;
+  background: linear-gradient(to bottom, #8dd4ff, #61b8fa);
   position: relative;
-  top: -355px;
-  left: 250px;
+  top: -391px;
+  left: 275px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .sports:hover {
-  outline: 2px solid #b0b0b0;
-  background: #61b8fa;
+  outline: 2px solid #61b8fa;
+  background: linear-gradient(to bottom, #b3e5ff, #8dd4ff);
 }
 
 .sportsIcon {
@@ -281,8 +199,8 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
+  width: 88px;
+  height: 88px;
   color: #fff;
 }
 
@@ -293,60 +211,28 @@
 .sportsLabel {
   color: #fff;
   position: relative;
-  top: 220px;
-  left: 10px;
+  top: 242px;
+  left: 15px;
   font-family: "Calibri", sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.8px;
-  cursor: default;
-}
-
-.weather {
-  width: 245px;
-  height: 245px;
-  background: #3a8db7;
-  position: relative;
-  top: -590px;
-  left: 250px;
-}
-
-.weather:hover {
-  outline: 2px solid #b0b0b0;
-  background: #3a8db7;
-}
-
-.weatherIcon {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 65px;
-  color: #fff;
-}
-
-.weatherweather {
-  color: #fff;
-  position: relative;
-  top: 220px;
-  left: 10px;
-  font-family: "Calibri", sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.8px;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.9px;
   cursor: default;
 }
 
 .photos {
-  width: 120px;
-  height: 120px;
-  background: #142b6b;
+  width: 132px;
+  height: 132px;
+  background: linear-gradient(to bottom, #1e3a8a, #142b6b);
   position: relative;
-  top: -725px;
-  left: 500px;
+  top: -798px;
+  left: 550px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .photos:hover {
-  outline: 2px solid #b0b0b0;
-  background: #1e3a8a;
+  outline: 2px solid #142b6b;
+  background: linear-gradient(to bottom, #4a6baa, #1e3a8a);
 }
 
 .photoIcon {
@@ -354,34 +240,36 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   color: #fff;
 }
 
 .photophoto {
   color: #fff;
   position: relative;
-  top: 95px;
-  left: 10px;
+  top: 105px;
+  left: 15px;
   font-family: "Calibri", sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.8px;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.9px;
   cursor: default;
 }
 
 .help {
-  width: 120px;
-  height: 120px;
-  background: #808080;
+  width: 132px;
+  height: 132px;
+  background: linear-gradient(to bottom, #a0a0a0, #808080);
   position: relative;
-  top: -719px;
-  left: 500px;
+  top: -791px;
+  left: 550px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .help:hover {
-  outline: 2px solid #b0b0b0;
-  background: #808080;
+  outline: 2px solid #808080;
+  background: linear-gradient(to bottom, #c0c0c0, #a0a0a0);
 }
 
 .helpIcon {
@@ -389,18 +277,19 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 55px;
-  height: 55px;
+  width: 61px;
+  height: 61px;
   color: #fff;
 }
 
 .helphelp {
   color: #fff;
   position: relative;
-  top: 95px;
-  left: 10px;
+  top: 105px;
+  left: 15px;
   font-family: "Calibri", sans-serif;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 400;
   cursor: default;
 }
 
