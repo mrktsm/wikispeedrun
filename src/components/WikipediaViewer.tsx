@@ -34,9 +34,10 @@ const getArticleData = async (language: string, title: string) => {
 interface WikipediaViewerProps {
   initialTitle?: string;
   hideControls?: boolean;
+  onArticleNavigate?: (articleName: string) => void;
 }
 
-const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideControls = false }: WikipediaViewerProps) => {
+const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideControls = false, onArticleNavigate }: WikipediaViewerProps) => {
   const [articleTitle, setArticleTitle] = useState(initialTitle);
   const [language, setLanguage] = useState("en");
 
@@ -72,6 +73,10 @@ const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideCont
         // Skip special pages, files, categories, etc.
         if (!newTitle.includes(':')) {
           setArticleTitle(newTitle);
+          // Notify parent component about navigation
+          if (onArticleNavigate) {
+            onArticleNavigate(newTitle);
+          }
           // Scroll to top when navigating to new article
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }

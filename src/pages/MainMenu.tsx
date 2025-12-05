@@ -27,7 +27,14 @@ const MainMenu = () => {
 
   const handleStartGame = () => {
     if (startArticle.trim()) {
-      navigate(`/game?start=${encodeURIComponent(startArticle.trim())}`);
+      const endArticleParam = endArticle.trim()
+        ? `&end=${encodeURIComponent(endArticle.trim())}`
+        : "";
+      navigate(
+        `/game?start=${encodeURIComponent(
+          startArticle.trim()
+        )}${endArticleParam}`
+      );
     }
   };
 
