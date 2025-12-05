@@ -54,6 +54,33 @@ const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideCont
     setLanguage(e.target.value);
   };
 
+  const handleArticleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const link = target.closest('a');
+    
+    if (link) {
+      const href = link.getAttribute('href');
+      
+      // Check if it's a Wikipedia article link (starts with /wiki/)
+      if (href && href.startsWith('/wiki/')) {
+        e.preventDefault();
+        
+        // Extract article title from /wiki/Article_Title
+        const newTitle = decodeURIComponent(href.replace('/wiki/', ''));
+        
+        // Skip special pages, files, categories, etc.
+        if (!newTitle.includes(':')) {
+          setArticleTitle(newTitle);
+          // Scroll to top when navigating to new article
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else {
+        // Prevent external links from navigating away
+        e.preventDefault();
+      }
+    }
+  };
+
   if (isFetching) {
     return (
       <div className="wikipedia-viewer">
@@ -129,6 +156,7 @@ const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideCont
           <h1 className="wiki-title">{data.parse.title}</h1>
           <div
             className="wiki-content"
+            onClick={handleArticleClick}
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(data.parse.text["*"]),
             }}
