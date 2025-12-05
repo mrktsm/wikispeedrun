@@ -439,8 +439,8 @@
 }
 
 .option-input:focus {
-  border-color: #33cc33;
-  box-shadow: 0 0 0 3px rgba(51, 204, 51, 0.1);
+  outline: none;
+  border-color: #ddd;
 }
 
 .option-input::placeholder {
@@ -489,17 +489,13 @@
   border: none;
   border-radius: 0;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: background 0.2s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   margin-top: 16px;
 }
 
 .start-game-button:hover {
   background: linear-gradient(to bottom, #66ff66, #33cc33);
-}
-
-.start-game-button:active {
-  transform: scale(0.98);
 }
 
 .start-game-button i {

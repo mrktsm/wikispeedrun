@@ -1,5 +1,6 @@
 import "./MainMenu.css";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import multiplayerIcon from "../assets/two-players-joysticks-multiplayer-svgrepo-com.svg";
 import fightIcon from "../assets/fight-svgrepo-com(1).svg";
 import { IoCalendarNumberSharp } from "react-icons/io5";
@@ -11,15 +12,23 @@ import { FaRandom } from "react-icons/fa";
 import ArticlePreview from "../components/ArticlePreview";
 
 const MainMenu = () => {
+  const navigate = useNavigate();
   const [showSinglePlayer, setShowSinglePlayer] = useState(false);
   const [startArticle, setStartArticle] = useState("");
   const [endArticle, setEndArticle] = useState("");
+
   const handleSinglePlayerClick = () => {
     setShowSinglePlayer(true);
   };
 
   const handleBackClick = () => {
     setShowSinglePlayer(false);
+  };
+
+  const handleStartGame = () => {
+    if (startArticle.trim()) {
+      navigate(`/game?start=${encodeURIComponent(startArticle.trim())}`);
+    }
   };
 
   return (
@@ -119,7 +128,9 @@ const MainMenu = () => {
               </div>
             </div>
 
-            <button className="start-game-button">Start Game</button>
+            <button className="start-game-button" onClick={handleStartGame}>
+              Start Game
+            </button>
           </div>
         </div>
       </div>
