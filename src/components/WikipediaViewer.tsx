@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DOMPurify from "dompurify";
 import "./WikipediaViewer.css";
 import WikipediaSkeleton from "./WikipediaSkeleton";
@@ -35,9 +35,17 @@ interface WikipediaViewerProps {
   initialTitle?: string;
   hideControls?: boolean;
   onArticleNavigate?: (articleName: string) => void;
+  endArticle?: string;
+  onDestinationReached?: () => void;
 }
 
-const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideControls = false, onArticleNavigate }: WikipediaViewerProps) => {
+const WikipediaViewer = ({
+  initialTitle = "React_(JavaScript_library)",
+  hideControls = false,
+  onArticleNavigate,
+  endArticle,
+  onDestinationReached,
+}: WikipediaViewerProps) => {
   const [articleTitle, setArticleTitle] = useState(initialTitle);
   const [language, setLanguage] = useState("en");
 
@@ -47,6 +55,15 @@ const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideCont
     enabled: Boolean(articleTitle),
     refetchOnWindowFocus: false,
   });
+
+  // Detect destination reached
+  useEffect(() => {
+    if (!endArticle || !data?.parse?.title || !onDestinationReached) return;
+    const normalize = (t: string) => t.replace(/\s+/g, "_").toLowerCase();
+    if (normalize(data.parse.title) === normalize(endArticle)) {
+      onDestinationReached();
+    }
+  }, [data, endArticle, onDestinationReached]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setArticleTitle(e.target.value);

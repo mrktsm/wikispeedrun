@@ -7,7 +7,7 @@
 
 .speedrun-widget {
   position: fixed;
-  bottom: 10px;
+  top: 10px;
   left: 10px;
   background-color: #151515;
   border: 1px solid #2a2a2a;
@@ -185,7 +185,6 @@
 .current-time-display {
   font-size: 56px;
   font-weight: bold;
-  background: linear-gradient(to bottom, #c0ffc0, #00aa00);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -196,6 +195,30 @@
   letter-spacing: 2px;
   margin: 2px 0 -12px 0;
   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+}
+
+/* Timer at 0 / not running - grey gradient */
+.current-time-display.timer-idle {
+  background: linear-gradient(to bottom, #e0e0e0, #a0a0a0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Timer running - green gradient */
+.current-time-display.timer-running {
+  background: linear-gradient(to bottom, #c0ffc0, #00aa00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Timer stopped - blue gradient */
+.current-time-display.timer-stopped {
+  background: linear-gradient(to bottom, #a0d4ff, #0066cc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .timer-centiseconds {

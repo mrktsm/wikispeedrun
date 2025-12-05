@@ -61,6 +61,14 @@ const MainMenu = () => {
     }
   };
 
+  const handleGithubClick = () => {
+    window.open(
+      "https://github.com/mrktsm/wikicrawlrs",
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
   return (
     <div className="container">
       <div className="menu-header">
@@ -92,7 +100,7 @@ const MainMenu = () => {
             <span className="calendarDay">Multiplayer</span>
           </div>
 
-          <div className="photos">
+          <div className="photos" onClick={handleGithubClick}>
             <FaGithub className="photoIcon" />
             <span className="photophoto">GitHub</span>
           </div>
@@ -204,7 +212,6 @@ const MainMenu = () => {
                   {gameResults.endArticle.replace(/_/g, " ")}
                 </span>
               </div>
-
             </div>
           )}
         </div>

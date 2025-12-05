@@ -501,3 +501,74 @@
 .start-game-button i {
   font-size: clamp(16px, 2vw, 22px);
 }
+
+/* Results Panel */
+.results-panel {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transition: opacity 0.3s ease;
+  width: 100%;
+}
+
+.results-panel.visible {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+}
+
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+  border: 1px solid #ddd;
+}
+
+.stat-label-result {
+  font-family: "Calibri", sans-serif;
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 500;
+  color: #333;
+}
+
+.stat-value-result {
+  font-family: "Calibri", sans-serif;
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 600;
+  color: #202122;
+}
+
+.stat-value-result.time {
+  font-family: "Futura Now Headline", sans-serif;
+  font-size: clamp(24px, 3vw, 32px);
+  background: linear-gradient(to bottom, #c0ffc0, #00aa00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-value-result.article {
+  font-size: clamp(14px, 1.8vw, 18px);
+  color: #0645ad;
+  max-width: 250px;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-container .start-game-button {
+  margin-top: 24px;
+}

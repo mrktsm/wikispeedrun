@@ -4,19 +4,51 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import MainMenu from "./pages/MainMenu";
 import Game from "./pages/Game";
 import "./App.css";
+
+// Define route order for determining slide direction
+const routeOrder: Record<string, number> = {
+  "/": 0,
+  "/game": 1,
+};
+
+function getRouteIndex(pathname: string): number {
+  // Handle routes with query params
+  const basePath = pathname.split("?")[0];
+  return routeOrder[basePath] ?? 0;
+}
 
 function AppRoutes() {
   const location = useLocation();
   const [displayLocation, setDisplayLocation] = useState(location);
   const [transitionStage, setTransitionStage] = useState("idle");
   const [prevLocation, setPrevLocation] = useState(location);
+  const [slideDirection, setSlideDirection] = useState<"forward" | "back">(
+    "forward"
+  );
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     if (location !== displayLocation) {
+      // Determine direction based on route state or route order
+      const locationState = location.state as { direction?: string } | null;
+      if (locationState?.direction === "back") {
+        setSlideDirection("back");
+      } else {
+        // Compare route indices to determine direction
+        const currentIndex = getRouteIndex(displayLocation.pathname);
+        const nextIndex = getRouteIndex(location.pathname);
+        setSlideDirection(nextIndex > currentIndex ? "forward" : "back");
+      }
+
       setTransitionStage("exiting");
       setPrevLocation(displayLocation);
     }
@@ -38,10 +70,14 @@ function AppRoutes() {
     }
   }, [transitionStage, location]);
 
+  const exitingClass = slideDirection === "back" ? "exiting-back" : "exiting";
+  const enteringClass =
+    slideDirection === "back" ? "entering-back" : "entering";
+
   return (
     <div className="page-transition-container">
       {transitionStage === "exiting" && (
-        <div className="page-transition exiting">
+        <div className={`page-transition ${exitingClass}`}>
           <Routes location={prevLocation}>
             <Route path="/" element={<MainMenu />} />
             <Route path="/game" element={<Game />} />
@@ -50,7 +86,7 @@ function AppRoutes() {
       )}
       <div
         className={`page-transition ${
-          transitionStage === "entering" ? "entering" : ""
+          transitionStage === "entering" ? enteringClass : ""
         }`}
       >
         <Routes location={displayLocation}>

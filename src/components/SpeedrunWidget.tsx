@@ -18,15 +18,34 @@ interface Segment {
 interface SpeedrunWidgetProps {
   gameMode?: string;
   endArticle?: string;
+  isRunning?: boolean;
+  isStopped?: boolean;
 }
 
 export interface SpeedrunWidgetRef {
   addSegment: (articleName: string) => void;
+  getCurrentTime: () => string;
+  getSegmentsCount: () => number;
 }
 
 const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
-  ({ gameMode = "Single Player", endArticle = "Link to reach" }, ref) => {
+  (
+    {
+      gameMode = "Single Player",
+      endArticle = "Link to reach",
+      isRunning = false,
+      isStopped = false,
+    },
+    ref
+  ) => {
     const [currentTime, setCurrentTime] = useState("0:00.00");
+
+    // Determine timer color class
+    const getTimerClass = () => {
+      if (isStopped) return "timer-stopped";
+      if (!isRunning || currentTime === "0:00.00") return "timer-idle";
+      return "timer-running";
+    };
     const [segments, setSegments] = useState<Segment[]>([]);
     const segmentTimesRef = useRef<number[]>([]); // Store times in centiseconds
     const MAX_SEGMENTS = 8; // Show 8 segments max (7 articles + End)
@@ -132,9 +151,14 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
           return newSegments;
         });
       },
+      getCurrentTime: () => currentTime,
+      getSegmentsCount: () => segments.length,
     }));
 
     useEffect(() => {
+      // Only run timer when isRunning is true and not stopped
+      if (!isRunning || isStopped) return;
+
       // Timer starts at 0:00.00 and increments
       const interval = setInterval(() => {
         setCurrentTime((prev) => {
@@ -193,7 +217,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
         });
       }, 10);
       return () => clearInterval(interval);
-    }, []);
+    }, [isRunning, isStopped]);
 
     return (
       <div className="speedrun-widget">
@@ -256,7 +280,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
           </div>
         </div>
 
-        <div className="current-time-display">
+        <div className={`current-time-display ${getTimerClass()}`}>
           {currentTime.slice(0, -2)}
           <span className="timer-centiseconds">{currentTime.slice(-2)}</span>
         </div>
