@@ -1,6 +1,6 @@
 import "./MainMenu.css";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import multiplayerIcon from "../assets/two-players-joysticks-multiplayer-svgrepo-com.svg";
 import fightIcon from "../assets/fight-svgrepo-com(1).svg";
 import { IoCalendarNumberSharp } from "react-icons/io5";
@@ -11,11 +11,32 @@ import { IoArrowBack } from "react-icons/io5";
 import { FaRandom } from "react-icons/fa";
 import ArticlePreview from "../components/ArticlePreview";
 
+interface GameResults {
+  time: string;
+  segments: number;
+  startArticle: string;
+  endArticle: string;
+}
+
 const MainMenu = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showSinglePlayer, setShowSinglePlayer] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [gameResults, setGameResults] = useState<GameResults | null>(null);
   const [startArticle, setStartArticle] = useState("");
   const [endArticle, setEndArticle] = useState("");
+
+  // Check for results data from game completion
+  useEffect(() => {
+    const state = location.state as { results?: GameResults } | null;
+    if (state?.results) {
+      setGameResults(state.results);
+      setShowResults(true);
+      // Clear the state so refresh doesn't show results again
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleSinglePlayerClick = () => {
     setShowSinglePlayer(true);
@@ -23,6 +44,8 @@ const MainMenu = () => {
 
   const handleBackClick = () => {
     setShowSinglePlayer(false);
+    setShowResults(false);
+    setGameResults(null);
   };
 
   const handleStartGame = () => {
@@ -50,7 +73,11 @@ const MainMenu = () => {
 
       <div className="content-wrapper">
         {/* Main Menu Buttons */}
-        <div className={`button-grid ${showSinglePlayer ? "hidden" : ""}`}>
+        <div
+          className={`button-grid ${
+            showSinglePlayer || showResults ? "hidden" : ""
+          }`}
+        >
           <div className="mail" onClick={handleSinglePlayerClick}>
             <i className="fa fa-play fa-3x mailIcon"></i>
             <span className="mailmail">Single Player</span>
@@ -139,6 +166,47 @@ const MainMenu = () => {
               Start Game
             </button>
           </div>
+        </div>
+
+        {/* Game Results */}
+        <div className={`results-panel ${showResults ? "visible" : ""}`}>
+          <button className="back-button" onClick={handleBackClick}>
+            <IoArrowBack />
+            <span>Back</span>
+          </button>
+
+          {gameResults && (
+            <div className="stats-container">
+              <div className="stat-row">
+                <span className="stat-label-result">Final Time</span>
+                <span className="stat-value-result time">
+                  {gameResults.time}
+                </span>
+              </div>
+
+              <div className="stat-row">
+                <span className="stat-label-result">Articles Visited</span>
+                <span className="stat-value-result">
+                  {gameResults.segments}
+                </span>
+              </div>
+
+              <div className="stat-row">
+                <span className="stat-label-result">Start</span>
+                <span className="stat-value-result article">
+                  {gameResults.startArticle.replace(/_/g, " ")}
+                </span>
+              </div>
+
+              <div className="stat-row">
+                <span className="stat-label-result">Destination</span>
+                <span className="stat-value-result article">
+                  {gameResults.endArticle.replace(/_/g, " ")}
+                </span>
+              </div>
+
+            </div>
+          )}
         </div>
       </div>
 
