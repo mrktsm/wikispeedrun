@@ -77,8 +77,10 @@ const WikipediaViewer = ({ initialTitle = "React_(JavaScript_library)", hideCont
           if (onArticleNavigate) {
             onArticleNavigate(newTitle);
           }
-          // Scroll to top when navigating to new article
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // Scroll to the very top when navigating to new article
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         }
       } else {
         // Prevent external links from navigating away

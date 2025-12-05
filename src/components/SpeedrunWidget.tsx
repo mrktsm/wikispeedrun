@@ -30,6 +30,17 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
     const [segments, setSegments] = useState<Segment[]>([]);
     const segmentTimesRef = useRef<number[]>([]); // Store times in centiseconds
     const MAX_SEGMENTS = 8; // Show 8 segments max (7 articles + End)
+    const previousSegment = segments[segments.length - 1];
+    const previousDiffText =
+      previousSegment && previousSegment.timeDiff
+        ? previousSegment.timeDiff
+        : "-";
+    const previousDiffClass =
+      previousSegment && previousSegment.isAhead !== null
+        ? previousSegment.isAhead
+          ? "ahead"
+          : "behind"
+        : "";
 
     // Convert centiseconds to formatted time string
     const formatTime = (centiseconds: number): string => {
@@ -76,7 +87,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = (totalSeconds % 60).toFixed(1);
 
-      const isAhead = totalSeconds < 60; // Green if under 1 minute
+      const isAhead = totalSeconds < 60; // Green if under 1 minute, red otherwise
 
       if (minutes > 0) {
         return { text: `+${minutes}:${seconds.padStart(4, "0")}`, isAhead };
@@ -253,15 +264,13 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
         <div className="speedrun-stats">
           <div className="stat">
             <span className="stat-label">Previous Segment:</span>
-            <span className="stat-value behind">+17.5</span>
+            <span className={`stat-value ${previousDiffClass || ""}`}>
+              {previousDiffText}
+            </span>
           </div>
           <div className="stat">
             <span className="stat-label">Best Possible Time:</span>
-            <span className="stat-value">6:44:06.5</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Sum of Best Segments:</span>
-            <span className="stat-value">6:40:39.3</span>
+            <span className="stat-value">-</span>
           </div>
         </div>
       </div>
