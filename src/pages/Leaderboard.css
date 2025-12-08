@@ -254,6 +254,9 @@
   grid-template-columns: 300px minmax(0, 820px) 300px;
   gap: 16px;
   padding: 0 16px 0 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+  justify-content: center;
 }
 
 .leaderboard-tabs {
@@ -262,6 +265,7 @@
   border-bottom: none;
   margin-bottom: 0;
   grid-column: 2;
+  width: 100%;
 }
 
 .leaderboard-center {
@@ -273,6 +277,7 @@
 }
 
 .leaderboard-tab {
+  flex: 1;
   padding: 14px 24px;
   font-size: 14px;
   font-weight: 500;
@@ -283,6 +288,7 @@
   transition: color 0.2s, background-color 0.2s;
   font-family: inherit;
   border-bottom: 2px solid transparent;
+  text-align: center;
 }
 
 .leaderboard-tab:hover {
@@ -356,6 +362,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.leaderboard-flag {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  display: inline-block;
+  vertical-align: middle;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .leaderboard-player-head {

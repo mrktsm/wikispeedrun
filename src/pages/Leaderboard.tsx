@@ -7,6 +7,7 @@ import "./Leaderboard.css";
 interface LeaderboardEntry {
   rank: number;
   username: string;
+  country: string;
   gamesPlayed: number;
   bestTime: string;
   avgTime: string;
@@ -21,6 +22,7 @@ const Leaderboard = () => {
     {
       rank: 1,
       username: "WikiMaster",
+      country: "US",
       gamesPlayed: 247,
       bestTime: "0:45.23",
       avgTime: "1:23.45",
@@ -29,6 +31,7 @@ const Leaderboard = () => {
     {
       rank: 2,
       username: "LinkRunner",
+      country: "GB",
       gamesPlayed: 189,
       bestTime: "0:52.11",
       avgTime: "1:31.22",
@@ -37,6 +40,7 @@ const Leaderboard = () => {
     {
       rank: 3,
       username: "SpeedCrawler",
+      country: "DE",
       gamesPlayed: 156,
       bestTime: "0:58.34",
       avgTime: "1:35.67",
@@ -45,6 +49,7 @@ const Leaderboard = () => {
     {
       rank: 4,
       username: "ArticleAce",
+      country: "CA",
       gamesPlayed: 203,
       bestTime: "1:02.15",
       avgTime: "1:42.11",
@@ -53,6 +58,7 @@ const Leaderboard = () => {
     {
       rank: 5,
       username: "PathFinder",
+      country: "FR",
       gamesPlayed: 134,
       bestTime: "1:05.89",
       avgTime: "1:48.33",
@@ -61,6 +67,7 @@ const Leaderboard = () => {
     {
       rank: 6,
       username: "WikiWizard",
+      country: "AU",
       gamesPlayed: 178,
       bestTime: "1:08.44",
       avgTime: "1:52.56",
@@ -69,6 +76,7 @@ const Leaderboard = () => {
     {
       rank: 7,
       username: "LinkLegend",
+      country: "JP",
       gamesPlayed: 145,
       bestTime: "1:12.33",
       avgTime: "1:55.78",
@@ -77,6 +85,7 @@ const Leaderboard = () => {
     {
       rank: 8,
       username: "CrawlKing",
+      country: "BR",
       gamesPlayed: 167,
       bestTime: "1:15.67",
       avgTime: "2:01.12",
@@ -85,6 +94,7 @@ const Leaderboard = () => {
     {
       rank: 9,
       username: "RouteRacer",
+      country: "IT",
       gamesPlayed: 112,
       bestTime: "1:18.22",
       avgTime: "2:05.44",
@@ -93,6 +103,7 @@ const Leaderboard = () => {
     {
       rank: 10,
       username: "WikiWarrior",
+      country: "ES",
       gamesPlayed: 198,
       bestTime: "1:21.55",
       avgTime: "2:08.89",
@@ -101,6 +112,7 @@ const Leaderboard = () => {
     {
       rank: 11,
       username: "ArticleHunter",
+      country: "NL",
       gamesPlayed: 89,
       bestTime: "1:24.11",
       avgTime: "2:12.33",
@@ -109,12 +121,35 @@ const Leaderboard = () => {
     {
       rank: 12,
       username: "LinkSprinter",
+      country: "SE",
       gamesPlayed: 124,
       bestTime: "1:28.45",
       avgTime: "2:15.67",
       winRate: "55%",
     },
+    {
+      rank: 13,
+      username: "WikiExplorer",
+      country: "NO",
+      gamesPlayed: 98,
+      bestTime: "1:32.11",
+      avgTime: "2:18.22",
+      winRate: "52%",
+    },
+    {
+      rank: 14,
+      username: "PathPioneer",
+      country: "PL",
+      gamesPlayed: 145,
+      bestTime: "1:35.67",
+      avgTime: "2:22.44",
+      winRate: "49%",
+    },
   ];
+
+  const getCountryFlagUrl = (countryCode: string) => {
+    return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+  };
 
   const getTrophyIcon = (rank: number) => {
     if (rank === 1) return <FaTrophy className="leaderboard-rank-icon gold" />;
@@ -164,8 +199,8 @@ const Leaderboard = () => {
         {/* Secondary Nav - Tabs */}
         <div className="leaderboard-nav-secondary">
           <div className="leaderboard-tabs">
-            <button className="leaderboard-tab">Quick pairing</button>
-            <button className="leaderboard-tab active">Lobby</button>
+            <button className="leaderboard-tab active">Quick pairing</button>
+            <button className="leaderboard-tab">Lobby</button>
             <button className="leaderboard-tab">Correspondence</button>
           </div>
         </div>
@@ -253,6 +288,11 @@ const Leaderboard = () => {
                               </span>
                             )}
                           </span>
+                          <img
+                            src={getCountryFlagUrl(entry.country)}
+                            alt={entry.country}
+                            className="leaderboard-flag"
+                          />
                           <span className="leaderboard-username">
                             {entry.username}
                           </span>
