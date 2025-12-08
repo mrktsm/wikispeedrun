@@ -1,6 +1,15 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTrophy, FaCog, FaSignInAlt, FaBolt } from "react-icons/fa";
-import { IoSearch, IoPersonSharp, IoPeopleSharp } from "react-icons/io5";
+import {
+  IoSearch,
+  IoPersonSharp,
+  IoPeopleSharp,
+  IoShuffle,
+  IoSwapHorizontal,
+  IoChevronDown,
+  IoChevronUp,
+} from "react-icons/io5";
 import fightIcon from "../assets/fight-svgrepo-com(1).svg";
 import "./Leaderboard.css";
 
@@ -16,6 +25,46 @@ interface LeaderboardEntry {
 
 const Leaderboard = () => {
   const navigate = useNavigate();
+  const [showSoloModal, setShowSoloModal] = useState(false);
+  const [startArticle, setStartArticle] = useState("");
+  const [endArticle, setEndArticle] = useState("");
+  const [language, setLanguage] = useState("en");
+  const [autoScroll, setAutoScroll] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [sampleSize, setSampleSize] = useState(50);
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  const handleSwapArticles = () => {
+    const temp = startArticle;
+    setStartArticle(endArticle);
+    setEndArticle(temp);
+  };
+
+  const handleRandomStart = () => {
+    // Placeholder for random article logic
+    setStartArticle("Random Article");
+  };
+
+  const handleRandomEnd = () => {
+    // Placeholder for random article logic
+    setEndArticle("Random Article");
+  };
+
+  const handlePlayNow = () => {
+    if (startArticle && endArticle) {
+      navigate(`/game?start=${encodeURIComponent(startArticle)}&end=${encodeURIComponent(endArticle)}`);
+      setShowSoloModal(false);
+    }
+  };
+
+  const handleFeelingLucky = () => {
+    // Placeholder for random game logic
+    navigate(`/game?start=Random&end=Random`);
+    setShowSoloModal(false);
+  };
 
   // Sample leaderboard data
   const leaderboardData: LeaderboardEntry[] = [
@@ -212,7 +261,10 @@ const Leaderboard = () => {
           {/* Left Sidebar - Active Games */}
           <div className="leaderboard-sidebar leaderboard-sidebar-left">
             <div className="game-button-group">
-              <div className="game-button first" onClick={() => navigate("/")}>
+              <div
+                className="game-button first"
+                onClick={() => setShowSoloModal(true)}
+              >
                 <div className="game-button-icon game-button-icon-small">
                   <IoPersonSharp className="game-button-icon-svg" />
                 </div>
@@ -399,6 +451,149 @@ const Leaderboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Solo Modal */}
+      {showSoloModal && (
+        <div className="solo-modal-overlay" onClick={() => setShowSoloModal(false)}>
+          <div className="solo-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="solo-modal-header">
+              <h2>Solo Game Setup</h2>
+              <button
+                className="solo-modal-close"
+                onClick={() => setShowSoloModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="solo-modal-body">
+              {/* Language Dropdown */}
+              <div className="solo-option-group">
+                <label className="solo-label">Language</label>
+                <select
+                  className="solo-select"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                >
+                  <option value="en">English (en)</option>
+                  <option value="es">Spanish (es)</option>
+                  <option value="fr">French (fr)</option>
+                  <option value="de">German (de)</option>
+                </select>
+              </div>
+
+              {/* Start Article */}
+              <div className="solo-option-group">
+                <label className="solo-label">Start Article</label>
+                <div className="solo-input-row">
+                  <input
+                    type="text"
+                    className="solo-input"
+                    placeholder="Enter start article"
+                    value={startArticle}
+                    onChange={(e) => setStartArticle(e.target.value)}
+                  />
+                  <button
+                    className="solo-shuffle-btn"
+                    onClick={handleRandomStart}
+                    title="Random article"
+                  >
+                    <IoShuffle />
+                  </button>
+                </div>
+              </div>
+
+              {/* Swap Button */}
+              <div className="solo-swap-container">
+                <button
+                  className="solo-swap-btn"
+                  onClick={handleSwapArticles}
+                  title="Swap articles"
+                >
+                  <IoSwapHorizontal />
+                </button>
+              </div>
+
+              {/* End Article */}
+              <div className="solo-option-group">
+                <label className="solo-label">End Article</label>
+                <div className="solo-input-row">
+                  <input
+                    type="text"
+                    className="solo-input"
+                    placeholder="Enter end article"
+                    value={endArticle}
+                    onChange={(e) => setEndArticle(e.target.value)}
+                  />
+                  <button
+                    className="solo-shuffle-btn"
+                    onClick={handleRandomEnd}
+                    title="Random article"
+                  >
+                    <IoShuffle />
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto-scroll Checkbox */}
+              <div className="solo-option-group">
+                <label className="solo-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={autoScroll}
+                    onChange={(e) => setAutoScroll(e.target.checked)}
+                  />
+                  Enable auto-scrolling
+                </label>
+              </div>
+
+              {/* Random Article Generator Settings */}
+              <div className="solo-collapsible">
+                <button
+                  className="solo-collapsible-header"
+                  onClick={() => toggleSection("random")}
+                >
+                  <span>Random Article Generator Settings</span>
+                  {expandedSection === "random" ? <IoChevronUp /> : <IoChevronDown />}
+                </button>
+                {expandedSection === "random" && (
+                  <div className="solo-collapsible-content">
+                    <label className="solo-label">Sample size:</label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="100"
+                      value={sampleSize}
+                      onChange={(e) => setSampleSize(Number(e.target.value))}
+                      className="solo-slider"
+                    />
+                    <p className="solo-hint">
+                      Sampling from {sampleSize * 60} most popular articles
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="solo-action-buttons">
+                <button
+                  className={`solo-play-btn ${startArticle && endArticle ? "active" : ""}`}
+                  onClick={handlePlayNow}
+                  disabled={!startArticle || !endArticle}
+                >
+                  Play Now
+                </button>
+                <button
+                  className="solo-lucky-btn"
+                  onClick={handleFeelingLucky}
+                >
+                  I'm Feeling Lucky
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
