@@ -230,7 +230,12 @@ const Leaderboard = () => {
               <table className="leaderboard-table">
                 <thead>
                   <tr>
-                    <th>Player</th>
+                    <th>
+                      <div className="leaderboard-player-head">
+                        <span className="leaderboard-rank-header">#</span>
+                        <span className="leaderboard-player-label">Player</span>
+                      </div>
+                    </th>
                     <th className="text-right">Rating</th>
                     <th className="text-right">Time</th>
                     <th className="text-right">Mode</th>
@@ -241,7 +246,13 @@ const Leaderboard = () => {
                     <tr key={entry.rank}>
                       <td>
                         <div className="leaderboard-player">
-                          {getTrophyIcon(entry.rank)}
+                          <span className="leaderboard-rank-slot">
+                            {getTrophyIcon(entry.rank) || (
+                              <span className="leaderboard-rank-number">
+                                {entry.rank}
+                              </span>
+                            )}
+                          </span>
                           <span className="leaderboard-username">
                             {entry.username}
                           </span>
@@ -301,32 +312,50 @@ const Leaderboard = () => {
 
             {/* Recent Activity */}
             <div className="right-panel">
-              <div className="panel-label">Recent Activity</div>
-              <div className="activity-list">
-                <div className="activity-row">
-                  <span className="activity-status win">W</span>
-                  <span className="activity-name">vs LinkRunner</span>
-                  <span className="activity-time">2m</span>
-                </div>
-                <div className="activity-row">
-                  <span className="activity-status loss">L</span>
-                  <span className="activity-name">vs WikiMaster</span>
-                  <span className="activity-time">15m</span>
-                </div>
-                <div className="activity-row">
-                  <span className="activity-status win">W</span>
-                  <span className="activity-name">Daily Challenge</span>
-                  <span className="activity-time">1h</span>
-                </div>
+              <div className="activity-card">
+                <table className="activity-table">
+                  <thead>
+                    <tr>
+                      <th className="activity-heading">Recent Activity</th>
+                      <th className="text-right"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="activity-entry">
+                        <span className="activity-result win">W</span>
+                        <span className="activity-vs">vs LinkRunner</span>
+                      </td>
+                      <td className="text-right activity-when">2m</td>
+                    </tr>
+                    <tr>
+                      <td className="activity-entry">
+                        <span className="activity-result loss">L</span>
+                        <span className="activity-vs">vs WikiMaster</span>
+                      </td>
+                      <td className="text-right activity-when">15m</td>
+                    </tr>
+                    <tr>
+                      <td className="activity-entry">
+                        <span className="activity-result win">W</span>
+                        <span className="activity-vs">vs SpeedCrawler</span>
+                      </td>
+                      <td className="text-right activity-when">1h</td>
+                    </tr>
+                    <tr>
+                      <td className="activity-entry">
+                        <span className="activity-result win">W</span>
+                        <span className="activity-vs">vs PathFinder</span>
+                      </td>
+                      <td className="text-right activity-when">2h</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
             {/* Online Stats */}
-            <div className="online-stats">
-              <span className="online-dot"></span>
-              <span className="online-count">2,847</span>
-              <span className="online-label">online now</span>
-            </div>
+            <div className="online-stats">16,883 games played today</div>
           </div>
         </div>
       </div>

@@ -2,12 +2,19 @@
   min-height: 100vh;
   background-color: #151515;
   color: #bababa;
-  font-family: 'Noto Sans', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-family: "Noto Sans", "Lucida Grande", "Lucida Sans Unicode", Geneva,
+    Verdana, sans-serif;
 }
 
 /* Navigation Bar */
 .leaderboard-nav {
-  background: linear-gradient(to bottom, #242424 0%, #242424 40%, rgba(36, 36, 36, 0.5) 70%, transparent 100%);
+  background: linear-gradient(
+    to bottom,
+    #242424 0%,
+    #242424 40%,
+    rgba(36, 36, 36, 0.5) 70%,
+    transparent 100%
+  );
 }
 
 .leaderboard-nav-container {
@@ -99,13 +106,16 @@
 /* Main Content */
 .leaderboard-main {
   padding: 0 16px 16px 16px;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .leaderboard-grid {
   display: grid;
-  grid-template-columns: 300px 1fr 240px;
+  grid-template-columns: 300px minmax(0, 820px) 300px;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+  justify-content: center;
 }
 
 @media (max-width: 1200px) {
@@ -143,7 +153,21 @@
 }
 
 .game-button:hover {
-  filter: brightness(1.15);
+  filter: brightness(1.1);
+}
+
+.game-button:hover .game-button-icon-svg {
+  color: #0066cc;
+}
+
+.game-button:hover .game-button-icon-img {
+  filter: invert(40%) sepia(91%) saturate(1350%) hue-rotate(192deg)
+    brightness(95%) contrast(96%);
+}
+
+.game-button:hover .game-button-title,
+.game-button:hover .game-button-meta {
+  color: #0066cc;
 }
 
 .game-button.first {
@@ -227,7 +251,7 @@
 
 .leaderboard-nav-secondary {
   display: grid;
-  grid-template-columns: 300px 1fr 240px;
+  grid-template-columns: 300px minmax(0, 820px) 300px;
   gap: 16px;
   padding: 0 16px 0 16px;
 }
@@ -298,11 +322,7 @@
 
 .leaderboard-table tbody tr {
   border-bottom: 1px solid #333;
-  transition: background-color 0.15s;
-}
-
-.leaderboard-table tbody tr:hover {
-  background-color: #242424;
+  transition: background 0.2s;
 }
 
 .leaderboard-table tbody tr:nth-child(odd) {
@@ -311,6 +331,10 @@
 
 .leaderboard-table tbody tr:nth-child(even) {
   background-color: #151515;
+}
+
+.leaderboard-table tbody tr:hover {
+  background: linear-gradient(to bottom, #1a3a5c, #152a42) !important;
 }
 
 .leaderboard-table tbody tr:last-child {
@@ -331,12 +355,43 @@
 .leaderboard-player {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.leaderboard-player-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaderboard-rank-header {
+  width: 24px;
+  text-align: center;
+  color: #666;
+  font-weight: 600;
+}
+
+.leaderboard-player-label {
+  color: #bababa;
+}
+
+.leaderboard-rank-slot {
+  width: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .leaderboard-rank-icon {
   width: 14px;
   height: 14px;
+}
+
+.leaderboard-rank-number {
+  font-size: 13px;
+  color: #666;
+  font-weight: 600;
+  text-align: center;
 }
 
 .leaderboard-rank-icon.gold {
@@ -379,6 +434,8 @@
 
 /* Right Sidebar */
 .leaderboard-sidebar-right {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
@@ -482,98 +539,118 @@
   background-color: #0077ee;
 }
 
-/* Activity List */
-.activity-list {
+/* Activity Table */
+.activity-card {
   background-color: #1a1a1a;
   border: 1px solid #2a2a2a;
   border-radius: 2px;
   overflow: hidden;
 }
 
-.activity-row {
-  display: flex;
-  align-items: center;
-  padding: 10px 12px;
-  border-bottom: 1px solid #2a2a2a;
+.activity-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.activity-row:last-child {
+.activity-table thead {
+  background: linear-gradient(to bottom, #242424, #151515);
+}
+
+.activity-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.activity-heading {
+  color: #bababa;
+  font-weight: 600;
+}
+
+.activity-table th.text-right {
+  text-align: right;
+}
+
+.activity-table tbody tr {
+  border-bottom: 1px solid #333;
+  transition: background-color 0.15s;
+}
+
+.activity-table tbody tr:hover {
+  background-color: #242424;
+}
+
+.activity-table tbody tr:nth-child(odd) {
+  background-color: #242424;
+}
+
+.activity-table tbody tr:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+.activity-table tbody tr:last-child {
   border-bottom: none;
 }
 
-.activity-row:nth-child(odd) {
-  background-color: #1e1e1e;
-}
-
-.activity-status {
-  width: 20px;
-  height: 20px;
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  margin-right: 10px;
-}
-
-.activity-status.win {
-  background-color: #22c55e;
-  color: #fff;
-}
-
-.activity-status.loss {
-  background-color: #ef4444;
-  color: #fff;
-}
-
-.activity-name {
-  flex: 1;
+.activity-table td {
+  padding: 8px 12px;
   font-size: 13px;
   color: #bababa;
 }
 
-.activity-time {
-  font-size: 12px;
+.activity-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-table td.text-right {
+  text-align: right;
+}
+
+.activity-result {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.activity-result.win {
+  background-color: #22c55e;
+}
+
+.activity-result.loss {
+  background-color: #ef4444;
+}
+
+.activity-opponent {
+  color: #fff;
+  font-weight: 500;
+}
+
+.activity-vs {
+  color: #fff;
+}
+
+.activity-when {
   color: #666;
 }
 
 /* Online Stats */
 .online-stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background-color: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 2px;
-}
-
-.online-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #4ade80;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.online-count {
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.online-label {
   font-size: 13px;
-  color: #666;
+  font-weight: 500;
+  color: #fff;
+  padding: 0;
+  margin-top: auto;
+  align-self: flex-start;
 }
-
