@@ -5,14 +5,15 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import MainMenu from "./pages/MainMenu";
 import Game from "./pages/Game";
+import Leaderboard from "./pages/Leaderboard";
 import "./App.css";
 
 // Define route order for determining slide direction
 const routeOrder: Record<string, number> = {
   "/": 0,
   "/game": 1,
+  "/leaderboard": 2,
 };
 
 function getRouteIndex(pathname: string): number {
@@ -79,8 +80,9 @@ function AppRoutes() {
       {transitionStage === "exiting" && (
         <div className={`page-transition ${exitingClass}`}>
           <Routes location={prevLocation}>
-            <Route path="/" element={<MainMenu />} />
+            <Route path="/" element={<Leaderboard />} />
             <Route path="/game" element={<Game />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
           </Routes>
         </div>
       )}
@@ -90,8 +92,9 @@ function AppRoutes() {
         }`}
       >
         <Routes location={displayLocation}>
-          <Route path="/" element={<MainMenu />} />
+          <Route path="/" element={<Leaderboard />} />
           <Route path="/game" element={<Game />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </div>
     </div>
