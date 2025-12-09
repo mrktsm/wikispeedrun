@@ -3,13 +3,13 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import SpeedrunWidget from "../components/SpeedrunWidget";
 import type { SpeedrunWidgetRef } from "../components/SpeedrunWidget";
 import WikipediaViewer from "../components/WikipediaViewer";
-import Scoreboard from "../components/Scoreboard";
 import "../App.css";
 import "./Game.css";
 
 const Game = () => {
   const [searchParams] = useSearchParams();
   const [hudVisible, setHudVisible] = useState(false);
+  const [articleLoaded, setArticleLoaded] = useState(false);
   const [routeCompleted, setRouteCompleted] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const speedrunWidgetRef = useRef<SpeedrunWidgetRef>(null);
@@ -18,12 +18,10 @@ const Game = () => {
     searchParams.get("start") || "React_(JavaScript_library)";
   const endArticle = searchParams.get("end") || "End Article";
 
-  // Show HUD after initial page transition completes (only on first mount)
+  // Show HUD immediately and track article loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setHudVisible(true);
-    }, 500); // Wait for page transition + article to start loading
-    return () => clearTimeout(timer);
+    setHudVisible(true);
+    setArticleLoaded(false);
   }, [startArticle]);
 
   // Navigate to main menu with results when route is completed
@@ -72,7 +70,10 @@ const Game = () => {
         <WikipediaViewer
           initialTitle={startArticle}
           hideControls={true}
-          onArticleNavigate={handleArticleNavigate}
+          onArticleLoaded={() => setArticleLoaded(true)}
+          onArticleNavigate={(articleName) => {
+            handleArticleNavigate(articleName);
+          }}
           endArticle={endArticle}
           onDestinationReached={() => setRouteCompleted(true)}
         />
@@ -83,7 +84,7 @@ const Game = () => {
           ref={speedrunWidgetRef}
           gameMode="Single Player"
           endArticle={endArticle}
-          isRunning={hudVisible}
+          isRunning={articleLoaded && hudVisible}
           isStopped={routeCompleted}
         />
       </div>

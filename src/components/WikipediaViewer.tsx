@@ -35,6 +35,7 @@ interface WikipediaViewerProps {
   initialTitle?: string;
   hideControls?: boolean;
   onArticleNavigate?: (articleName: string) => void;
+  onArticleLoaded?: () => void;
   endArticle?: string;
   onDestinationReached?: () => void;
 }
@@ -43,6 +44,7 @@ const WikipediaViewer = ({
   initialTitle = "React_(JavaScript_library)",
   hideControls = false,
   onArticleNavigate,
+  onArticleLoaded,
   endArticle,
   onDestinationReached,
 }: WikipediaViewerProps) => {
@@ -55,6 +57,13 @@ const WikipediaViewer = ({
     enabled: Boolean(articleTitle),
     refetchOnWindowFocus: false,
   });
+
+  // Notify when article loads
+  useEffect(() => {
+    if (data?.parse?.text && !isFetching && onArticleLoaded) {
+      onArticleLoaded();
+    }
+  }, [data, isFetching, onArticleLoaded]);
 
   // Detect destination reached
   useEffect(() => {

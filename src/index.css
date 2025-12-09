@@ -3,9 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
-  color: #202122;
-  background-color: #ffffff;
+  color-scheme: dark;
+  color: #bababa;
+  background-color: #151515;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -20,14 +20,14 @@
 }
 
 html {
-  background: #ffffff;
+  background: #151515;
   width: 100%;
   height: 100%;
   overflow-x: hidden;
 }
 
 body {
-  background: #ffffff;
+  background: #151515;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
@@ -37,7 +37,7 @@ body {
 }
 
 #root {
-  background: #ffffff;
+  background: #151515;
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;

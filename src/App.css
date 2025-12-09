@@ -25,28 +25,22 @@
   background: #ffffff;
 }
 
-/* Forward direction: new page slides in from right */
+/* Forward direction: new page slides in from bottom */
 .page-transition.exiting {
-  animation: slideOutLeft 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
   z-index: 1;
 }
 
 .page-transition.entering {
-  animation: slideInRight 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
   z-index: 2;
-  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
 }
 
-/* Back direction: new page slides in from left */
+/* Back direction: new page slides in from top */
 .page-transition.exiting-back {
-  animation: slideOutRight 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
   z-index: 1;
 }
 
 .page-transition.entering-back {
-  animation: slideInLeft 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
   z-index: 2;
-  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.15);
 }
 
 .page-transition:not(.exiting):not(.entering):not(.exiting-back):not(.entering-back) {
@@ -56,44 +50,3 @@
   box-shadow: none;
 }
 
-/* Forward animations */
-@keyframes slideOutLeft {
-  from {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-25%) scale(0.95);
-    opacity: 0.4;
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: none;
-  }
-}
-
-/* Back animations (reverse direction) */
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(25%) scale(0.95);
-    opacity: 0.4;
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: none;
-  }
-}

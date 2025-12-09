@@ -64,27 +64,14 @@
   }
 }
 
-/* Article slides in from right */
+/* Article container */
 .game-article-container {
-  animation: articleSlideIn 0.35s ease-out forwards;
 }
 
-@keyframes articleSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* HUD hidden by default, fades in when article loads */
+/* HUD hidden by default, shows when article loads */
 .game-hud {
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.25s ease-out, visibility 0.25s ease-out;
 }
 
 .game-hud.visible {
