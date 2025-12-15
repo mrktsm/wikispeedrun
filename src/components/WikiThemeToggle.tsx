@@ -7,9 +7,11 @@ interface WikiThemeToggleProps {
 
 const WikiThemeToggle = ({ onThemeChange }: WikiThemeToggleProps) => {
   const [isDark, setIsDark] = useState(() => {
-    // Check localStorage for saved preference
+    // Prefer saved preference; default to dark if none set
     const saved = localStorage.getItem("wiki-theme");
-    return saved === "dark";
+    if (saved === "dark") return true;
+    if (saved === "light") return false;
+    return true;
   });
 
   useEffect(() => {
