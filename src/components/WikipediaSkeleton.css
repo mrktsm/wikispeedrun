@@ -1,27 +1,16 @@
 .wiki-skeleton {
-  background: white;
+  background: #1a1a1a; /* default dark to avoid first-render flash */
   padding: 10px 30px;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
 }
 
-/* Dark mode skeleton */
-:root.wiki-dark-mode .wiki-skeleton {
-  background: #1a1a1a;
-}
-
-/* Pulse animation */
+/* Pulse animation (dark-friendly by default) */
 .skeleton-pulse {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
-}
-
-/* Dark mode pulse animation */
-:root.wiki-dark-mode .skeleton-pulse {
   background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
   background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes skeleton-shimmer {
