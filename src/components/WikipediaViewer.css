@@ -1,3 +1,67 @@
+/* ===================
+   WIKIPEDIA LIGHT MODE CSS VARIABLES (default)
+   These are the official Wikipedia color values
+   =================== */
+:root {
+  /* Light mode colors */
+  --wiki-color-base: #202122;
+  --wiki-color-base-hover: #404244;
+  --wiki-color-emphasized: #101418;
+  --wiki-color-subtle: #54595d;
+  --wiki-color-disabled: #a2a9b1;
+  --wiki-color-inverted: #fff;
+  --wiki-color-progressive: #36c;
+  --wiki-color-progressive-hover: #3056a9;
+  --wiki-color-visited: #6a60b0;
+  --wiki-color-visited-hover: #534fa3;
+  --wiki-color-destructive: #bf3c2c;
+
+  --wiki-background-base: #fff;
+  --wiki-background-neutral: #eaecf0;
+  --wiki-background-neutral-subtle: #f8f9fa;
+  --wiki-background-interactive: #eaecf0;
+  --wiki-background-interactive-hover: #dadde3;
+
+  --wiki-border-base: #a2a9b1;
+  --wiki-border-subtle: #c8ccd1;
+  --wiki-border-muted: #dadde3;
+  --wiki-border-interactive: #72777d;
+}
+
+/* ===================
+   WIKIPEDIA DARK MODE CSS VARIABLES
+   Matched to the app's existing dark theme (#151515, #242424, etc.)
+   =================== */
+:root.wiki-dark-mode {
+  color-scheme: dark;
+
+  /* Text colors - matched to app theme */
+  --wiki-color-base: #fff;
+  --wiki-color-base-hover: #fff;
+  --wiki-color-emphasized: #fff;
+  --wiki-color-subtle: #aaa;
+  --wiki-color-disabled: #666;
+  --wiki-color-inverted: #151515;
+  --wiki-color-progressive: #6ab0f3;
+  --wiki-color-progressive-hover: #8dc4f7;
+  --wiki-color-visited: #b4a7d6;
+  --wiki-color-visited-hover: #c9bfe3;
+  --wiki-color-destructive: #ff6b6b;
+
+  /* Background colors - matched to app theme */
+  --wiki-background-base: #151515;
+  --wiki-background-neutral: #242424;
+  --wiki-background-neutral-subtle: #1a1a1a;
+  --wiki-background-interactive: #242424;
+  --wiki-background-interactive-hover: #333;
+
+  /* Border colors - matched to app theme */
+  --wiki-border-base: #333;
+  --wiki-border-subtle: #2a2a2a;
+  --wiki-border-muted: #333;
+  --wiki-border-interactive: #444;
+}
+
 .wikipedia-viewer {
   max-width: 1200px;
   margin: 0 auto 0 360px; /* Add left margin for speedrun widget */
@@ -16,19 +80,19 @@
   min-width: 200px;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--wiki-border-base);
   border-radius: 4px;
-  background: white;
-  color: #202122;
+  background: var(--wiki-background-base);
+  color: var(--wiki-color-base);
 }
 
 .wiki-select {
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--wiki-border-base);
   border-radius: 4px;
-  background: white;
-  color: #202122;
+  background: var(--wiki-background-base);
+  color: var(--wiki-color-base);
 }
 
 .wiki-loading,
@@ -44,7 +108,7 @@
 }
 
 .wiki-article {
-  background: white;
+  background: var(--wiki-background-base);
   padding: 10px 30px;
   border-radius: 8px;
   overflow: visible; /* Don't clip floated content */
@@ -53,16 +117,16 @@
 .wiki-title {
   font-size: 32px;
   margin-bottom: 20px;
-  border-bottom: 2px solid #ddd;
+  border-bottom: 2px solid var(--wiki-border-muted);
   padding-bottom: 10px;
   font-family: "Linux Libertine", "Georgia", "Times", serif;
   font-weight: normal;
-  color: #202122;
+  color: var(--wiki-color-base);
 }
 
 .wiki-content {
   line-height: 1.6;
-  color: #202122;
+  color: var(--wiki-color-base);
   font-family: sans-serif; /* Wikipedia body text uses sans-serif */
 }
 
@@ -92,8 +156,9 @@
   margin-bottom: 0.25em;
   padding-top: 0.5em;
   padding-bottom: 0.25em;
-  border-bottom: 1px solid #a2a9b1;
+  border-bottom: 1px solid var(--wiki-border-base);
   overflow: hidden; /* Creates block formatting context - doesn't extend under floats */
+  color: var(--wiki-color-base);
 }
 
 /* h3 and h4 use sans-serif */
@@ -105,6 +170,7 @@
   margin-bottom: 0.25em;
   padding-top: 0.3em;
   overflow: hidden; /* Creates block formatting context - doesn't extend under floats */
+  color: var(--wiki-color-base);
 }
 
 .wiki-content h4 {
@@ -115,6 +181,7 @@
   margin-bottom: 0.25em;
   padding-top: 0.2em;
   overflow: hidden; /* Creates block formatting context - doesn't extend under floats */
+  color: var(--wiki-color-base);
 }
 
 /* Paragraphs - allow text to wrap around floated images */
@@ -125,16 +192,21 @@
 
 /* Links */
 .wiki-content a {
-  color: #0645ad;
+  color: var(--wiki-color-progressive);
   text-decoration: none;
 }
 
 .wiki-content a:hover {
   text-decoration: underline;
+  color: var(--wiki-color-progressive-hover);
 }
 
 .wiki-content a:visited {
-  color: #0b0080;
+  color: var(--wiki-color-visited);
+}
+
+.wiki-content a:visited:hover {
+  color: var(--wiki-color-visited-hover);
 }
 
 /* Lists */
@@ -203,27 +275,28 @@
 .wiki-content .thumbinner {
   display: block;
   width: min-content;
-  border: 1px solid #c8ccd1;
+  border: 1px solid var(--wiki-border-subtle);
   padding: 3px;
-  background-color: #f8f9fa;
+  background-color: var(--wiki-background-neutral-subtle);
   font-size: 94%;
   text-align: center;
   overflow: hidden;
   min-width: 100px;
   max-width: 100%;
+  color: var(--wiki-color-base);
 }
 
 /* Thumbnail image itself with border */
 .wiki-content .thumbimage {
   display: block;
-  background-color: #ffffff;
-  border: 1px solid #c8ccd1;
+  background-color: var(--wiki-background-base);
+  border: 1px solid var(--wiki-border-subtle);
   margin: 0 auto;
 }
 
 /* Thumbnail border class */
 .wiki-content .thumbborder {
-  border: 1px solid #eaecf0;
+  border: 1px solid var(--wiki-border-muted);
 }
 
 /* Thumbnail caption - INSIDE thumbinner, below the image */
@@ -237,7 +310,8 @@
   border: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  background-color: #f8f9fa; /* Same as thumbinner background */
+  background-color: var(--wiki-background-neutral-subtle);
+  color: var(--wiki-color-base);
   /* Constrain to parent width - don't expand container */
   box-sizing: border-box;
 }
@@ -267,10 +341,10 @@
    =================== */
 
 .wiki-content .infobox {
-  border: 1px solid #a2a9b1;
+  border: 1px solid var(--wiki-border-base);
   border-spacing: 3px;
-  /* background set by table cells via inline styles from Wikipedia */
-  color: black;
+  background-color: var(--wiki-background-neutral-subtle);
+  color: var(--wiki-color-base);
   margin: 0.5em 0 0.5em 1em;
   padding: 0.2em;
   float: right !important;
@@ -359,8 +433,8 @@
   display: block;
   width: min-content;
   padding: 3px;
-  background-color: #f8f9fa;
-  border: 1px solid #c8ccd1;
+  background-color: var(--wiki-background-neutral-subtle);
+  border: 1px solid var(--wiki-border-subtle);
   text-align: center;
   min-width: 100px;
   max-width: 100%;
@@ -368,6 +442,7 @@
   float: right !important;
   clear: right;
   margin: 0.5em 0 1.3em 1.4em !important;
+  color: var(--wiki-color-base);
 }
 
 /* Right-aligned figures (explicit) */
@@ -395,8 +470,8 @@
 .wiki-content figure img,
 .wiki-content figure a img {
   display: block;
-  border: 1px solid #c8ccd1;
-  background-color: #fff;
+  border: 1px solid var(--wiki-border-subtle);
+  background-color: var(--wiki-background-base);
   margin: 0 auto;
 }
 
@@ -410,7 +485,8 @@
   line-height: 1.4em;
   text-align: left;
   border: 0;
-  background-color: #f8f9fa; /* Same as figure background */
+  background-color: var(--wiki-background-neutral-subtle);
+  color: var(--wiki-color-base);
   word-wrap: break-word;
   overflow-wrap: break-word;
   /* Constrain to parent width - don't expand container */
@@ -444,13 +520,14 @@
 .wiki-content table {
   border-collapse: collapse;
   margin: 1em 0;
+  color: var(--wiki-color-base);
 }
 
 .wiki-content table.wikitable {
-  background-color: #f8f9fa;
-  color: #202122;
+  background-color: var(--wiki-background-neutral-subtle);
+  color: var(--wiki-color-base);
   margin: 1em 0;
-  border: 1px solid #a2a9b1;
+  border: 1px solid var(--wiki-border-base);
   border-collapse: collapse;
 }
 
@@ -458,13 +535,13 @@
 .wiki-content table.wikitable > tr > td,
 .wiki-content table.wikitable > * > tr > th,
 .wiki-content table.wikitable > * > tr > td {
-  border: 1px solid #a2a9b1;
+  border: 1px solid var(--wiki-border-base);
   padding: 0.2em 0.4em;
 }
 
 .wiki-content table.wikitable > tr > th,
 .wiki-content table.wikitable > * > tr > th {
-  background-color: #eaecf0;
+  background-color: var(--wiki-background-neutral);
   text-align: center;
 }
 
@@ -504,8 +581,9 @@
 
 .wiki-content .navbox,
 .wiki-content .sidebar {
-  border: 1px solid #a2a9b1;
+  border: 1px solid var(--wiki-border-base);
   padding: 0;
+  color: var(--wiki-color-base);
 }
 
 .wiki-content .sidebar {
@@ -513,7 +591,7 @@
   float: right;
   clear: right;
   margin: 0.5em 0 1em 1em;
-  background: #f8f9fa;
+  background: var(--wiki-background-neutral-subtle);
 }
 
 /* ===================
@@ -570,8 +648,9 @@
 /* Message boxes */
 .wiki-content .mbox-small,
 .wiki-content .ambox {
-  border: 1px solid #a2a9b1;
-  background-color: #f8f9fa;
+  border: 1px solid var(--wiki-border-base);
+  background-color: var(--wiki-background-neutral-subtle);
+  color: var(--wiki-color-base);
   margin: 0.5em 0;
   padding: 0.5em 1em;
 }
@@ -587,12 +666,13 @@
 .wiki-content pre,
 .wiki-content code {
   font-family: monospace;
-  background-color: #f8f9fa;
+  background-color: var(--wiki-background-neutral-subtle);
+  color: var(--wiki-color-base);
 }
 
 .wiki-content pre {
   padding: 1em;
-  border: 1px solid #eaecf0;
+  border: 1px solid var(--wiki-border-muted);
   overflow-x: auto;
   white-space: pre;
 }
@@ -615,4 +695,183 @@
     float: none;
     margin: 1em auto;
   }
+}
+
+/* ===================
+   DARK MODE OVERRIDES
+   Force dark styles on Wikipedia content with inline styles
+   =================== */
+
+:root.wiki-dark-mode .game-page {
+  background-color: #1a1a1a !important;
+}
+
+:root.wiki-dark-mode .wikipedia-viewer {
+  background-color: #1a1a1a !important;
+}
+
+:root.wiki-dark-mode .wiki-article {
+  background-color: #1a1a1a !important;
+  background: #1a1a1a !important;
+}
+
+:root.wiki-dark-mode .wiki-title {
+  color: #fff !important;
+  border-bottom-color: #333 !important;
+}
+
+:root.wiki-dark-mode .wiki-content {
+  color: #fff !important;
+}
+
+:root.wiki-dark-mode .wiki-content p,
+:root.wiki-dark-mode .wiki-content span,
+:root.wiki-dark-mode .wiki-content div {
+  color: #fff;
+}
+
+:root.wiki-dark-mode .wiki-content h2,
+:root.wiki-dark-mode .wiki-content h3,
+:root.wiki-dark-mode .wiki-content h4,
+:root.wiki-dark-mode .wiki-content h5,
+:root.wiki-dark-mode .wiki-content h6 {
+  color: #fff !important;
+  border-bottom-color: #333 !important;
+}
+
+:root.wiki-dark-mode .wiki-content a {
+  color: #6ab0f3 !important;
+}
+
+:root.wiki-dark-mode .wiki-content a:visited {
+  color: #b4a7d6 !important;
+}
+
+:root.wiki-dark-mode .wiki-content a:hover {
+  color: #8dc4f7 !important;
+}
+
+/* Override inline background colors on infoboxes */
+:root.wiki-dark-mode .wiki-content .infobox,
+:root.wiki-dark-mode .wiki-content .infobox th,
+:root.wiki-dark-mode .wiki-content .infobox td,
+:root.wiki-dark-mode .wiki-content .infobox tr,
+:root.wiki-dark-mode .wiki-content .infobox-above,
+:root.wiki-dark-mode .wiki-content .infobox-title,
+:root.wiki-dark-mode .wiki-content .infobox-header,
+:root.wiki-dark-mode .wiki-content .infobox-subheader,
+:root.wiki-dark-mode .wiki-content .infobox-data,
+:root.wiki-dark-mode .wiki-content .infobox-label,
+:root.wiki-dark-mode .wiki-content .infobox-full-data,
+:root.wiki-dark-mode .wiki-content .infobox-image,
+:root.wiki-dark-mode .wiki-content .infobox-below {
+  background-color: #242424 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* Override inline background colors on tables */
+:root.wiki-dark-mode .wiki-content table,
+:root.wiki-dark-mode .wiki-content table th,
+:root.wiki-dark-mode .wiki-content table td,
+:root.wiki-dark-mode .wiki-content table tr {
+  background-color: #1a1a1a !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+:root.wiki-dark-mode .wiki-content table.wikitable th {
+  background-color: #242424 !important;
+}
+
+/* Override message boxes and ambox */
+:root.wiki-dark-mode .wiki-content .ambox,
+:root.wiki-dark-mode .wiki-content .mbox-small,
+:root.wiki-dark-mode .wiki-content .mbox-text,
+:root.wiki-dark-mode .wiki-content .mbox-image {
+  background-color: #242424 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* Force dark on navboxes and sidebars */
+:root.wiki-dark-mode .wiki-content .navbox,
+:root.wiki-dark-mode .wiki-content .navbox th,
+:root.wiki-dark-mode .wiki-content .navbox td,
+:root.wiki-dark-mode .wiki-content .sidebar,
+:root.wiki-dark-mode .wiki-content .sidebar th,
+:root.wiki-dark-mode .wiki-content .sidebar td {
+  background-color: #242424 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* Force dark on all divs with inline styles */
+:root.wiki-dark-mode .wiki-content div[style*="background"],
+:root.wiki-dark-mode .wiki-content span[style*="background"],
+:root.wiki-dark-mode .wiki-content td[style*="background"],
+:root.wiki-dark-mode .wiki-content th[style*="background"],
+:root.wiki-dark-mode .wiki-content tr[style*="background"] {
+  background-color: #242424 !important;
+  color: #fff !important;
+}
+
+/* Override color styles */
+:root.wiki-dark-mode .wiki-content div[style*="color"],
+:root.wiki-dark-mode .wiki-content span[style*="color"],
+:root.wiki-dark-mode .wiki-content td[style*="color"],
+:root.wiki-dark-mode .wiki-content th[style*="color"] {
+  color: #fff !important;
+}
+
+/* Invert images that look bad in dark mode (optional - like diagrams) */
+:root.wiki-dark-mode .wiki-content .mw-file-description img,
+:root.wiki-dark-mode .wiki-content .thumbimage {
+  /* Don't invert by default, but you can enable this for specific cases */
+}
+
+/* Force dark on hatnotes */
+:root.wiki-dark-mode .wiki-content .hatnote {
+  color: #aaa;
+}
+
+/* Force dark on shortdescription */
+:root.wiki-dark-mode .wiki-content .shortdescription {
+  color: #aaa;
+}
+
+/* Force dark on lists */
+:root.wiki-dark-mode .wiki-content ul,
+:root.wiki-dark-mode .wiki-content ol,
+:root.wiki-dark-mode .wiki-content li {
+  color: #fff;
+}
+
+/* Force dark on references section */
+:root.wiki-dark-mode .wiki-content .reflist,
+:root.wiki-dark-mode .wiki-content .references {
+  color: #fff;
+}
+
+/* Force dark on categories */
+:root.wiki-dark-mode .wiki-content .catlinks {
+  background-color: #242424 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* Force dark on thumbnails and figures */
+:root.wiki-dark-mode .wiki-content .thumb,
+:root.wiki-dark-mode .wiki-content .thumbinner,
+:root.wiki-dark-mode .wiki-content .thumbcaption,
+:root.wiki-dark-mode .wiki-content figure,
+:root.wiki-dark-mode .wiki-content figcaption {
+  background-color: #242424 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+:root.wiki-dark-mode .wiki-content .thumbimage,
+:root.wiki-dark-mode .wiki-content figure img {
+  border-color: #333 !important;
 }

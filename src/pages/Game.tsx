@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import SpeedrunWidget from "../components/SpeedrunWidget";
 import type { SpeedrunWidgetRef } from "../components/SpeedrunWidget";
 import WikipediaViewer from "../components/WikipediaViewer";
+// import WikiThemeToggle from "../components/WikiThemeToggle";
 import "../App.css";
 import "./Game.css";
 
@@ -66,6 +67,9 @@ const Game = () => {
 
   return (
     <div className="game-page">
+      <div className="wiki-theme-toggle-container">
+        {/* <WikiThemeToggle /> */}
+      </div>
       <div className="game-article-container">
         <WikipediaViewer
           initialTitle={startArticle}

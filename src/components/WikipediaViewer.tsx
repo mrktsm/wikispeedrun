@@ -26,7 +26,7 @@ const getArticleData = async (language: string, title: string) => {
         format: "json",
         disableeditsection: "true",
         redirects: "true",
-      }).toString(),
+      }).toString()
   );
   return resp.json() as Promise<WikiApiArticle>;
 };
@@ -84,20 +84,20 @@ const WikipediaViewer = ({
 
   const handleArticleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    const link = target.closest('a');
-    
+    const link = target.closest("a");
+
     if (link) {
-      const href = link.getAttribute('href');
-      
+      const href = link.getAttribute("href");
+
       // Check if it's a Wikipedia article link (starts with /wiki/)
-      if (href && href.startsWith('/wiki/')) {
+      if (href && href.startsWith("/wiki/")) {
         e.preventDefault();
-        
+
         // Extract article title from /wiki/Article_Title
-        const newTitle = decodeURIComponent(href.replace('/wiki/', ''));
-        
+        const newTitle = decodeURIComponent(href.replace("/wiki/", ""));
+
         // Skip special pages, files, categories, etc.
-        if (!newTitle.includes(':')) {
+        if (!newTitle.includes(":")) {
           setArticleTitle(newTitle);
           // Notify parent component about navigation
           if (onArticleNavigate) {
@@ -127,7 +127,11 @@ const WikipediaViewer = ({
               placeholder="Enter Wikipedia article title"
               className="wiki-input"
             />
-            <select value={language} onChange={handleLanguageChange} className="wiki-select">
+            <select
+              value={language}
+              onChange={handleLanguageChange}
+              className="wiki-select"
+            >
               <option value="en">English</option>
               <option value="es">Spanish</option>
               <option value="fr">French</option>
@@ -152,7 +156,11 @@ const WikipediaViewer = ({
               placeholder="Enter Wikipedia article title"
               className="wiki-input"
             />
-            <select value={language} onChange={handleLanguageChange} className="wiki-select">
+            <select
+              value={language}
+              onChange={handleLanguageChange}
+              className="wiki-select"
+            >
               <option value="en">English</option>
               <option value="es">Spanish</option>
               <option value="fr">French</option>
@@ -160,7 +168,9 @@ const WikipediaViewer = ({
             </select>
           </div>
         )}
-        <div className="wiki-error">Error loading article. Please try again.</div>
+        <div className="wiki-error">
+          Error loading article. Please try again.
+        </div>
       </div>
     );
   }
@@ -176,7 +186,11 @@ const WikipediaViewer = ({
             placeholder="Enter Wikipedia article title"
             className="wiki-input"
           />
-          <select value={language} onChange={handleLanguageChange} className="wiki-select">
+          <select
+            value={language}
+            onChange={handleLanguageChange}
+            className="wiki-select"
+          >
             <option value="en">English</option>
             <option value="es">Spanish</option>
             <option value="fr">French</option>
@@ -202,4 +216,3 @@ const WikipediaViewer = ({
 };
 
 export default WikipediaViewer;
-

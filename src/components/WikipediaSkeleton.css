@@ -6,16 +6,22 @@
   overflow: hidden;
 }
 
+/* Dark mode skeleton */
+:root.wiki-dark-mode .wiki-skeleton {
+  background: #1a1a1a;
+}
+
 /* Pulse animation */
 .skeleton-pulse {
-  background: linear-gradient(
-    90deg,
-    #f0f0f0 25%,
-    #e0e0e0 50%,
-    #f0f0f0 75%
-  );
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Dark mode pulse animation */
+:root.wiki-dark-mode .skeleton-pulse {
+  background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
 }
 
 @keyframes skeleton-shimmer {
@@ -37,6 +43,10 @@
   padding-bottom: 10px;
 }
 
+:root.wiki-dark-mode .skeleton-title {
+  border-bottom-color: #333;
+}
+
 /* Infobox - floats right like Wikipedia */
 .skeleton-infobox {
   float: right;
@@ -46,6 +56,11 @@
   border: 1px solid #e0e0e0;
   background: #f8f9fa;
   border-radius: 2px;
+}
+
+:root.wiki-dark-mode .skeleton-infobox {
+  background: #242424;
+  border-color: #333;
 }
 
 .skeleton-infobox-image {
@@ -78,6 +93,10 @@
 
 .skeleton-heading.short {
   width: 22%;
+}
+
+:root.wiki-dark-mode .skeleton-heading {
+  border-bottom-color: #333;
 }
 
 /* Paragraphs */
@@ -116,4 +135,3 @@
     margin: 1em 0;
   }
 }
-
