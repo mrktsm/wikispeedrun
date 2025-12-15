@@ -875,3 +875,30 @@
 :root.wiki-dark-mode .wiki-content figure img {
   border-color: #333 !important;
 }
+
+/* Force dark on side-box elements (Wiktionary, etc.) */
+:root.wiki-dark-mode .wiki-content .side-box,
+:root.wiki-dark-mode .wiki-content .side-box-flex,
+:root.wiki-dark-mode .wiki-content .side-box-image,
+:root.wiki-dark-mode .wiki-content .side-box-text,
+:root.wiki-dark-mode .wiki-content .side-box-right {
+  background-color: #242424 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* Force dark on sister project boxes */
+:root.wiki-dark-mode .wiki-content .sistersitebox,
+:root.wiki-dark-mode .wiki-content .plainlist {
+  background-color: #242424 !important;
+  color: #fff !important;
+}
+
+/* Force dark on metadata boxes */
+:root.wiki-dark-mode .wiki-content .metadata,
+:root.wiki-dark-mode .wiki-content .stub,
+:root.wiki-dark-mode .wiki-content .noprint {
+  background-color: #242424 !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}

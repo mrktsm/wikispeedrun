@@ -1,16 +1,7 @@
 .game-page {
   min-height: 100vh;
-  background-color: var(--wiki-background-neutral-subtle, #f8f9fa);
+  background-color: #1a1a1a;
   position: relative;
-  transition: background-color 0.3s ease;
-}
-
-/* Theme toggle container - positioned in top right */
-.wiki-theme-toggle-container {
-  position: fixed;
-  top: 12px;
-  right: 20px;
-  z-index: 1000;
 }
 
 .route-overlay {

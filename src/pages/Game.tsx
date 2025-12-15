@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import SpeedrunWidget from "../components/SpeedrunWidget";
 import type { SpeedrunWidgetRef } from "../components/SpeedrunWidget";
 import WikipediaViewer from "../components/WikipediaViewer";
-// import WikiThemeToggle from "../components/WikiThemeToggle";
 import "../App.css";
 import "./Game.css";
 
@@ -24,6 +23,14 @@ const Game = () => {
     setHudVisible(true);
     setArticleLoaded(false);
   }, [startArticle]);
+
+  // Always enable dark mode for Wikipedia content
+  useEffect(() => {
+    document.documentElement.classList.add("wiki-dark-mode");
+    return () => {
+      document.documentElement.classList.remove("wiki-dark-mode");
+    };
+  }, []);
 
   // Navigate to main menu with results when route is completed
   useEffect(() => {
@@ -67,9 +74,6 @@ const Game = () => {
 
   return (
     <div className="game-page">
-      <div className="wiki-theme-toggle-container">
-        {/* <WikiThemeToggle /> */}
-      </div>
       <div className="game-article-container">
         <WikipediaViewer
           initialTitle={startArticle}
