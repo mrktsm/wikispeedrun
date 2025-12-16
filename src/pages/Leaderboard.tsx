@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTrophy, FaCog, FaSignInAlt, FaBolt } from "react-icons/fa";
 import {
@@ -12,6 +12,55 @@ import {
 } from "react-icons/io5";
 import fightIcon from "../assets/fight-svgrepo-com(1).svg";
 import "./Leaderboard.css";
+
+// Wikipedia API helpers
+const searchWikipediaArticles = async (
+  query: string,
+  language: string = "en"
+): Promise<string[]> => {
+  if (!query.trim()) return [];
+  try {
+    const response = await fetch(
+      `https://${language}.wikipedia.org/w/api.php?` +
+        new URLSearchParams({
+          action: "opensearch",
+          search: query,
+          limit: "8",
+          namespace: "0",
+          format: "json",
+          origin: "*",
+        })
+    );
+    const data = await response.json();
+    return data[1] || [];
+  } catch (error) {
+    console.error("Wikipedia search error:", error);
+    return [];
+  }
+};
+
+const getRandomWikipediaArticle = async (
+  language: string = "en"
+): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://${language}.wikipedia.org/w/api.php?` +
+        new URLSearchParams({
+          action: "query",
+          list: "random",
+          rnnamespace: "0",
+          rnlimit: "1",
+          format: "json",
+          origin: "*",
+        })
+    );
+    const data = await response.json();
+    return data.query?.random?.[0]?.title || "Random Article";
+  } catch (error) {
+    console.error("Random article error:", error);
+    return "Random Article";
+  }
+};
 
 interface LeaderboardEntry {
   rank: number;
@@ -33,6 +82,86 @@ const Leaderboard = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [sampleSize, setSampleSize] = useState(50);
 
+  // Autocomplete state
+  const [startSuggestions, setStartSuggestions] = useState<string[]>([]);
+  const [endSuggestions, setEndSuggestions] = useState<string[]>([]);
+  const [showStartSuggestions, setShowStartSuggestions] = useState(false);
+  const [showEndSuggestions, setShowEndSuggestions] = useState(false);
+  const [isLoadingStart, setIsLoadingStart] = useState(false);
+  const [isLoadingEnd, setIsLoadingEnd] = useState(false);
+  const [isRandomizingStart, setIsRandomizingStart] = useState(false);
+  const [isRandomizingEnd, setIsRandomizingEnd] = useState(false);
+
+  const startInputRef = useRef<HTMLInputElement>(null);
+  const endInputRef = useRef<HTMLInputElement>(null);
+  const startDropdownRef = useRef<HTMLDivElement>(null);
+  const endDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Debounced search
+  const debounceRef = useRef<{ start?: NodeJS.Timeout; end?: NodeJS.Timeout }>({});
+
+  const searchStart = useCallback(
+    (query: string) => {
+      if (debounceRef.current.start) clearTimeout(debounceRef.current.start);
+      if (!query.trim()) {
+        setStartSuggestions([]);
+        setShowStartSuggestions(false);
+        return;
+      }
+      setIsLoadingStart(true);
+      debounceRef.current.start = setTimeout(async () => {
+        const results = await searchWikipediaArticles(query, language);
+        setStartSuggestions(results);
+        setShowStartSuggestions(results.length > 0);
+        setIsLoadingStart(false);
+      }, 300);
+    },
+    [language]
+  );
+
+  const searchEnd = useCallback(
+    (query: string) => {
+      if (debounceRef.current.end) clearTimeout(debounceRef.current.end);
+      if (!query.trim()) {
+        setEndSuggestions([]);
+        setShowEndSuggestions(false);
+        return;
+      }
+      setIsLoadingEnd(true);
+      debounceRef.current.end = setTimeout(async () => {
+        const results = await searchWikipediaArticles(query, language);
+        setEndSuggestions(results);
+        setShowEndSuggestions(results.length > 0);
+        setIsLoadingEnd(false);
+      }, 300);
+    },
+    [language]
+  );
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        startDropdownRef.current &&
+        !startDropdownRef.current.contains(e.target as Node) &&
+        startInputRef.current &&
+        !startInputRef.current.contains(e.target as Node)
+      ) {
+        setShowStartSuggestions(false);
+      }
+      if (
+        endDropdownRef.current &&
+        !endDropdownRef.current.contains(e.target as Node) &&
+        endInputRef.current &&
+        !endInputRef.current.contains(e.target as Node)
+      ) {
+        setShowEndSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
@@ -41,16 +170,36 @@ const Leaderboard = () => {
     const temp = startArticle;
     setStartArticle(endArticle);
     setEndArticle(temp);
+    setShowStartSuggestions(false);
+    setShowEndSuggestions(false);
   };
 
-  const handleRandomStart = () => {
-    // Placeholder for random article logic
-    setStartArticle("Random Article");
+  const handleRandomStart = async () => {
+    setIsRandomizingStart(true);
+    const randomArticle = await getRandomWikipediaArticle(language);
+    setStartArticle(randomArticle);
+    setShowStartSuggestions(false);
+    setIsRandomizingStart(false);
   };
 
-  const handleRandomEnd = () => {
-    // Placeholder for random article logic
-    setEndArticle("Random Article");
+  const handleRandomEnd = async () => {
+    setIsRandomizingEnd(true);
+    const randomArticle = await getRandomWikipediaArticle(language);
+    setEndArticle(randomArticle);
+    setShowEndSuggestions(false);
+    setIsRandomizingEnd(false);
+  };
+
+  const handleSelectStartSuggestion = (suggestion: string) => {
+    setStartArticle(suggestion);
+    setShowStartSuggestions(false);
+    setStartSuggestions([]);
+  };
+
+  const handleSelectEndSuggestion = (suggestion: string) => {
+    setEndArticle(suggestion);
+    setShowEndSuggestions(false);
+    setEndSuggestions([]);
   };
 
   const handlePlayNow = () => {
@@ -60,9 +209,15 @@ const Leaderboard = () => {
     }
   };
 
-  const handleFeelingLucky = () => {
-    // Placeholder for random game logic
-    navigate(`/game?start=Random&end=Random`);
+  const handleFeelingLucky = async () => {
+    // Fetch two random articles and start the game
+    const [randomStart, randomEnd] = await Promise.all([
+      getRandomWikipediaArticle(language),
+      getRandomWikipediaArticle(language),
+    ]);
+    navigate(
+      `/game?start=${encodeURIComponent(randomStart)}&end=${encodeURIComponent(randomEnd)}`
+    );
     setShowSoloModal(false);
   };
 
@@ -486,17 +641,51 @@ const Leaderboard = () => {
               <div className="solo-option-group">
                 <label className="solo-label">Start Article</label>
                 <div className="solo-input-row">
-                  <input
-                    type="text"
-                    className="solo-input"
-                    placeholder="Enter start article"
-                    value={startArticle}
-                    onChange={(e) => setStartArticle(e.target.value)}
-                  />
+                  <div className="solo-autocomplete-wrapper">
+                    <input
+                      ref={startInputRef}
+                      type="text"
+                      className="solo-input"
+                      placeholder="Search for an article..."
+                      value={startArticle}
+                      onChange={(e) => {
+                        setStartArticle(e.target.value);
+                        searchStart(e.target.value);
+                      }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (startSuggestions.length > 0) {
+                          handleSelectStartSuggestion(startSuggestions[0]);
+                        } else if (startArticle.trim()) {
+                          setShowStartSuggestions(false);
+                        }
+                      }
+                    }}
+                      onFocus={() => {
+                        if (startSuggestions.length > 0) setShowStartSuggestions(true);
+                      }}
+                    />
+                    {isLoadingStart && <span className="solo-loading-indicator">...</span>}
+                    {showStartSuggestions && startSuggestions.length > 0 && (
+                      <div ref={startDropdownRef} className="solo-suggestions-dropdown">
+                        {startSuggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="solo-suggestion-item"
+                            onClick={() => handleSelectStartSuggestion(suggestion)}
+                          >
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button
-                    className="solo-shuffle-btn"
+                    className={`solo-shuffle-btn ${isRandomizingStart ? "loading" : ""}`}
                     onClick={handleRandomStart}
                     title="Random article"
+                    disabled={isRandomizingStart}
                   >
                     <IoShuffle />
                   </button>
@@ -518,17 +707,51 @@ const Leaderboard = () => {
               <div className="solo-option-group">
                 <label className="solo-label">End Article</label>
                 <div className="solo-input-row">
-                  <input
-                    type="text"
-                    className="solo-input"
-                    placeholder="Enter end article"
-                    value={endArticle}
-                    onChange={(e) => setEndArticle(e.target.value)}
-                  />
+                  <div className="solo-autocomplete-wrapper">
+                    <input
+                      ref={endInputRef}
+                      type="text"
+                      className="solo-input"
+                      placeholder="Search for an article..."
+                      value={endArticle}
+                      onChange={(e) => {
+                        setEndArticle(e.target.value);
+                        searchEnd(e.target.value);
+                      }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (endSuggestions.length > 0) {
+                          handleSelectEndSuggestion(endSuggestions[0]);
+                        } else if (endArticle.trim()) {
+                          setShowEndSuggestions(false);
+                        }
+                      }
+                    }}
+                      onFocus={() => {
+                        if (endSuggestions.length > 0) setShowEndSuggestions(true);
+                      }}
+                    />
+                    {isLoadingEnd && <span className="solo-loading-indicator">...</span>}
+                    {showEndSuggestions && endSuggestions.length > 0 && (
+                      <div ref={endDropdownRef} className="solo-suggestions-dropdown">
+                        {endSuggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="solo-suggestion-item"
+                            onClick={() => handleSelectEndSuggestion(suggestion)}
+                          >
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button
-                    className="solo-shuffle-btn"
+                    className={`solo-shuffle-btn ${isRandomizingEnd ? "loading" : ""}`}
                     onClick={handleRandomEnd}
                     title="Random article"
+                    disabled={isRandomizingEnd}
                   >
                     <IoShuffle />
                   </button>

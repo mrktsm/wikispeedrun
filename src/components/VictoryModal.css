@@ -1,0 +1,258 @@
+@font-face {
+  font-family: "Futura Now Headline";
+  src: url("../assets/fonts/FuturaNowHeadlineBold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+/* Overlay */
+.victory-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+/* Modal - matches speedrun-widget style */
+.victory-modal {
+  background-color: #151515;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  padding: 6px;
+  font-family: "Calibri", sans-serif;
+  color: #fff;
+  min-width: 340px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Header - matches game-title style */
+.victory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: -6px -6px 0 -6px;
+  padding: 8px 10px;
+  background: linear-gradient(to bottom, #242424, #151515);
+  border-radius: 2px 2px 0 0;
+  border-bottom: 1px solid #333;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.victory-header-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+
+/* Stats section - like end-article-name style */
+.victory-stats-section {
+  margin: 0 -6px;
+  padding: 10px 10px;
+  background: linear-gradient(to bottom, #242424, #151515);
+  border-bottom: 1px solid #333;
+}
+
+.victory-stats-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.victory-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  text-align: center;
+}
+
+.victory-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.victory-stat-number {
+  font-size: 28px;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.victory-stat-name {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 4px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Path section - matches segments-list style */
+.victory-path-section {
+  margin: 0 -6px;
+  background-color: #151515;
+  --path-row-height: 34px;
+  /* Section itself scrolls so 7 rows are visible at once */
+  max-height: calc(var(--path-row-height) * 7);
+  overflow-y: auto;
+}
+
+.victory-path-header {
+  padding: 8px 10px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(to bottom, #1a1a1a, #151515);
+  border-bottom: 1px solid #333;
+}
+
+.victory-path-list {
+  /* takes natural height; scrolling handled by section */
+}
+
+/* Path items - matches segment style */
+.victory-path-item {
+  display: flex;
+  align-items: center;
+  padding: 0 10px; /* horizontal only so height is fixed */
+  height: var(--path-row-height);
+  font-size: 16px;
+  border-bottom: 1px solid #333;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.victory-path-item:last-child {
+  border-bottom: none;
+}
+
+.victory-path-item:nth-child(odd) {
+  background-color: #242424;
+}
+
+.victory-path-item:nth-child(even) {
+  background-color: #151515;
+}
+
+.victory-path-name {
+  flex: 1;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.victory-path-times {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.victory-path-diff {
+  font-size: 14px;
+  min-width: 50px;
+  text-align: right;
+  font-weight: bold;
+}
+
+.victory-path-diff.ahead {
+  color: #90ee90;
+}
+
+.victory-path-diff.behind {
+  color: #ff4444;
+}
+
+.victory-path-time {
+  font-size: 14px;
+  color: #fff;
+  min-width: 70px;
+  text-align: right;
+  font-weight: bold;
+}
+
+/* Time display - matches current-time-display style */
+.victory-time-section {
+  margin: 0 -6px;
+  padding: 6px 10px 2px;
+  background-color: #151515;
+  border-top: 1px solid #333;
+}
+
+.victory-time {
+  font-size: 56px;
+  font-weight: bold;
+  font-family: "Futura Now Headline", sans-serif;
+  background: linear-gradient(to bottom, #a0d4ff, #0066cc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  padding: 2px 0 0 0;
+  margin: 2px 0 -12px 0;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+}
+
+.victory-time-centis {
+  font-size: 70%;
+}
+
+/* Actions - matches speedrun-stats style */
+.victory-actions {
+  display: flex;
+  gap: 10px;
+  margin: 0 -6px -6px -6px;
+  padding: 16px 10px 10px;
+  background: linear-gradient(to bottom, #242424, #151515);
+  border-radius: 0 0 2px 2px;
+}
+
+.victory-btn {
+  flex: 1;
+  padding: 10px 16px;
+  font-family: "Calibri", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.victory-btn.primary {
+  background: linear-gradient(to bottom, #0066cc, #003d7a);
+  color: #fff;
+  border: 1px solid #0066cc;
+}
+
+.victory-btn.primary:hover {
+  background: linear-gradient(to bottom, #0077dd, #004d9a);
+}
+
+.victory-btn.secondary {
+  background: linear-gradient(to bottom, #333, #242424);
+  color: #aaa;
+  border: 1px solid #444;
+}
+
+.victory-btn.secondary:hover {
+  background: linear-gradient(to bottom, #444, #333);
+  color: #fff;
+}
+

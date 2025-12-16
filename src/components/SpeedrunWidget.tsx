@@ -22,10 +22,17 @@ interface SpeedrunWidgetProps {
   isStopped?: boolean;
 }
 
+export interface SegmentData {
+  name: string;
+  time: string;
+  timeDiff: string | null;
+}
+
 export interface SpeedrunWidgetRef {
   addSegment: (articleName: string) => void;
   getCurrentTime: () => string;
   getSegmentsCount: () => number;
+  getSegments: () => SegmentData[];
 }
 
 const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
@@ -153,6 +160,12 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
       },
       getCurrentTime: () => currentTime,
       getSegmentsCount: () => segments.length,
+      getSegments: () =>
+        segments.map((s) => ({
+          name: s.name,
+          time: s.cumulativeTime,
+          timeDiff: s.timeDiff,
+        })),
     }));
 
     useEffect(() => {

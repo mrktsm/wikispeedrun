@@ -697,6 +697,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  overflow: visible; /* allow dropdowns to extend beyond body */
 }
 
 .solo-modal-header {
@@ -741,7 +742,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow-y: auto;
+  overflow: visible; /* avoid clipping autocomplete dropdowns */
   flex: 1;
 }
 
@@ -797,19 +798,20 @@
 .solo-input-row {
   display: flex;
   gap: 0;
+  align-items: stretch;
 }
 
 .solo-input {
   flex: 1;
   padding: 10px 12px;
   border: 1px solid #2a2a2a;
-  border-right: none;
   border-radius: 2px 0 0 2px;
   font-size: 14px;
   outline: none;
   background-color: #242424;
   color: #bababa;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .solo-input::placeholder {
@@ -824,7 +826,6 @@
   padding: 10px 14px;
   background: linear-gradient(to bottom, #242424, #1a1a1a);
   border: 1px solid #2a2a2a;
-  border-left: none;
   border-radius: 0 2px 2px 0;
   cursor: pointer;
   display: flex;
@@ -832,6 +833,7 @@
   justify-content: center;
   color: #8a8a8a;
   transition: background-color 0.2s, color 0.2s;
+  flex-shrink: 0;
 }
 
 .solo-shuffle-btn:hover {
@@ -842,6 +844,77 @@
 .solo-shuffle-btn svg {
   width: 18px;
   height: 18px;
+}
+
+.solo-shuffle-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.solo-shuffle-btn.loading svg {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Autocomplete wrapper and dropdown */
+.solo-autocomplete-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.solo-autocomplete-wrapper .solo-input {
+  width: 100%;
+  border-right: none;
+}
+
+.solo-loading-indicator {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 12px;
+}
+
+.solo-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 2000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.solo-suggestion-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  color: #bababa;
+  font-size: 14px;
+  border-bottom: 1px solid #2a2a2a;
+  transition: background-color 0.15s;
+}
+
+.solo-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.solo-suggestion-item:hover {
+  background-color: #242424;
+  color: #fff;
 }
 
 .solo-swap-container {

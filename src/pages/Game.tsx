@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SpeedrunWidget from "../components/SpeedrunWidget";
-import type { SpeedrunWidgetRef } from "../components/SpeedrunWidget";
+import type {
+  SpeedrunWidgetRef,
+  SegmentData,
+} from "../components/SpeedrunWidget";
 import WikipediaViewer from "../components/WikipediaViewer";
+import VictoryModal from "../components/VictoryModal";
 import "../App.css";
 import "./Game.css";
 
@@ -11,7 +15,11 @@ const Game = () => {
   const [hudVisible, setHudVisible] = useState(false);
   const [articleLoaded, setArticleLoaded] = useState(false);
   const [routeCompleted, setRouteCompleted] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [showVictoryModal, setShowVictoryModal] = useState(false);
+  const [gameStats, setGameStats] = useState<{
+    finalTime: string;
+    segments: SegmentData[];
+  } | null>(null);
   const speedrunWidgetRef = useRef<SpeedrunWidgetRef>(null);
   const navigate = useNavigate();
   const startArticle =
@@ -32,44 +40,36 @@ const Game = () => {
     };
   }, []);
 
-  // Navigate to main menu with results when route is completed
+  // Show victory modal when route is completed
   useEffect(() => {
     if (routeCompleted && speedrunWidgetRef.current) {
       const finalTime = speedrunWidgetRef.current.getCurrentTime();
-      const segmentsCount = speedrunWidgetRef.current.getSegmentsCount();
+      const segments = speedrunWidgetRef.current.getSegments();
 
-      // Delay showing overlay, then navigate back after a longer pause
-      const overlayTimer = setTimeout(() => {
-        setShowOverlay(true);
-      }, 700); // wait ~0.7s before showing text
+      // Small delay before showing modal for dramatic effect
+      const timer = setTimeout(() => {
+        setGameStats({ finalTime, segments });
+        setShowVictoryModal(true);
+      }, 500);
 
-      const navTimer = setTimeout(() => {
-        navigate("/", {
-          state: {
-            direction: "back",
-            results: {
-              time: finalTime,
-              segments: segmentsCount,
-              startArticle: startArticle,
-              endArticle: endArticle,
-            },
-          },
-        });
-      }, 2000); // slightly longer total wait before returning
-
-      return () => {
-        clearTimeout(overlayTimer);
-        clearTimeout(navTimer);
-      };
+      return () => clearTimeout(timer);
     }
-    // Reset overlay if routeCompleted is cleared
-    setShowOverlay(false);
-  }, [routeCompleted, navigate, startArticle, endArticle]);
+  }, [routeCompleted]);
 
   const handleArticleNavigate = (articleName: string) => {
     if (speedrunWidgetRef.current) {
       speedrunWidgetRef.current.addSegment(articleName);
     }
+  };
+
+  const handlePlayAgain = () => {
+    // Restart with same route
+    window.location.reload();
+  };
+
+  const handleNewRoute = () => {
+    // Go back to menu to pick new route
+    navigate("/", { state: { direction: "back" } });
   };
 
   return (
@@ -96,14 +96,15 @@ const Game = () => {
           isStopped={routeCompleted}
         />
       </div>
-      {showOverlay && (
-        <div className="route-overlay fade-in">
-          <div className="route-overlay-card">
-            <div className="route-overlay-title" data-text="ROUTE COMPLETED">
-              ROUTE COMPLETED
-            </div>
-          </div>
-        </div>
+      {showVictoryModal && gameStats && (
+        <VictoryModal
+          finalTime={gameStats.finalTime}
+          segments={gameStats.segments}
+          startArticle={startArticle}
+          endArticle={endArticle}
+          onPlayAgain={handlePlayAgain}
+          onNewRoute={handleNewRoute}
+        />
       )}
     </div>
   );
