@@ -330,7 +330,7 @@
 /* Lobby Code */
 .lobby-code-section {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   padding: 14px;
   background: #1a1a1a;
@@ -369,6 +369,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  margin-bottom: 2px;
 }
 
 .lobby-code-copy:hover {
@@ -574,7 +575,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 200px;
+  min-height: 300px;
 }
 
 .chat-card .race-lobby-card-body {
@@ -587,7 +588,7 @@
 .chat-messages {
   flex: 1;
   padding: 12px 14px;
-  max-height: 160px;
+  max-height: 400px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -677,12 +678,14 @@
 }
 
 .start-btn {
-  background-color: #0066cc;
+  background: linear-gradient(to bottom, #0066cc, #0052a3);
   color: #fff;
+  border: 1px solid #0052a3;
 }
 
 .start-btn:hover {
-  background-color: #0077ee;
+  background: linear-gradient(to bottom, #0077ee, #0066cc);
+  border-color: #0077ee;
 }
 
 .start-btn:disabled {

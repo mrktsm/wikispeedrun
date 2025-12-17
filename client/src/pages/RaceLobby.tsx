@@ -404,6 +404,14 @@ const RaceLobby = () => {
               <button className="race-action-btn invite-btn">
                 Invite Friends
               </button>
+              {isHost && (
+                <button
+                  className="race-action-btn start-btn"
+                  onClick={handleStartRace}
+                >
+                  Start
+                </button>
+              )}
               {!isHost && (
                 <button className="race-action-btn ready-btn">Ready Up</button>
               )}
