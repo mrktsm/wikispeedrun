@@ -66,6 +66,83 @@
 
 /* Article container */
 .game-article-container {
+  position: relative;
+}
+
+/* Other players' cursors */
+.other-player-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 1000;
+  will-change: transform;
+}
+
+.cursor-pointer {
+  color: #ff4757;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+  animation: cursor-pulse 1.5s ease-in-out infinite;
+}
+
+.cursor-pointer svg {
+  width: 22px;
+  height: 22px;
+  transform: rotate(-135deg);
+}
+
+.cursor-pointer svg path {
+  fill: currentColor;
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 1.5;
+}
+
+.cursor-name {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  background: rgba(255, 71, 87, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  font-family: "Noto Sans", sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes cursor-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Give each player a different color */
+.other-player-cursor:nth-child(2) .cursor-pointer {
+  color: #3498db;
+}
+.other-player-cursor:nth-child(2) .cursor-name {
+  background: rgba(52, 152, 219, 0.85);
+}
+
+.other-player-cursor:nth-child(3) .cursor-pointer {
+  color: #2ecc71;
+}
+.other-player-cursor:nth-child(3) .cursor-name {
+  background: rgba(46, 204, 113, 0.85);
+}
+
+.other-player-cursor:nth-child(4) .cursor-pointer {
+  color: #f1c40f;
+}
+.other-player-cursor:nth-child(4) .cursor-name {
+  background: rgba(241, 196, 15, 0.85);
 }
 
 /* HUD hidden by default, shows when article loads */
@@ -77,4 +154,101 @@
 .game-hud.visible {
   opacity: 1;
   visibility: visible;
+}
+
+/* Multiplayer progress indicators */
+.multiplayer-progress,
+.multiplayer-finished {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 12px;
+  min-width: 200px;
+  max-width: 280px;
+  z-index: 1000;
+  font-family: "Noto Sans", sans-serif;
+}
+
+.multiplayer-finished {
+  top: auto;
+  bottom: 100px;
+}
+
+.multiplayer-progress-header,
+.multiplayer-finished-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a8a8a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #333;
+}
+
+.multiplayer-player-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #bababa;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.multiplayer-player-progress:last-child {
+  border-bottom: none;
+}
+
+.mp-player-name {
+  font-weight: 500;
+  color: #fff;
+  flex: 1;
+}
+
+.mp-player-article {
+  font-size: 12px;
+  color: #8a8a8a;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 8px;
+}
+
+.mp-player-clicks {
+  font-size: 11px;
+  color: #666;
+}
+
+.multiplayer-finish-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.multiplayer-finish-row:last-child {
+  border-bottom: none;
+}
+
+.mp-finish-rank {
+  font-weight: 700;
+  color: #0a0;
+  min-width: 30px;
+}
+
+.mp-finish-name {
+  flex: 1;
+  color: #fff;
+  font-weight: 500;
+}
+
+.mp-finish-time {
+  color: #8a8a8a;
+  font-size: 12px;
 }

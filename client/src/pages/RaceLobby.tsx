@@ -1,18 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { IoShuffle, IoCopy, IoCheckmark } from "react-icons/io5";
+import {
+  useMultiplayer,
+  type Player as MultiplayerPlayer,
+} from "../hooks/useMultiplayer";
 import "./RaceLobby.css";
-
-interface Player {
-  id: string;
-  name: string;
-  isHost: boolean;
-  isReady: boolean;
-  country: string;
-  rating: number;
-  gamesPlayed?: number;
-  bestTime?: string;
-}
 
 interface ChatMessage {
   id: string;
@@ -22,60 +15,206 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+// Generate random lobby code
+function generateLobbyCode(): string {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+// Generate random player name - cached in sessionStorage to survive page transitions
+function getOrCreatePlayerName(): string {
+  const stored = sessionStorage.getItem("wiki-race-player-name");
+  if (stored) return stored;
+
+  const adjectives = ["Swift", "Quick", "Clever", "Wiki", "Speed", "Link"];
+  const nouns = ["Runner", "Racer", "Master", "Hunter", "Crawler", "Finder"];
+  const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${
+    nouns[Math.floor(Math.random() * nouns.length)]
+  }${Math.floor(Math.random() * 100)}`;
+
+  sessionStorage.setItem("wiki-race-player-name", name);
+  return name;
+}
+
 const RaceLobby = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const lobbyCode = searchParams.get("code") || generateLobbyCode();
+
+  // Get lobby code from URL or use default test lobby
+  const [lobbyCode] = useState(() => searchParams.get("code") || "TEST01");
+  const [playerName] = useState(() => getOrCreatePlayerName());
 
   const [startArticle, setStartArticle] = useState("Cat");
   const [endArticle, setEndArticle] = useState("Dog");
   const [gameMode, setGameMode] = useState("first_to_finish");
   const [visibility, setVisibility] = useState("public");
   const [copied, setCopied] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [hasJoined, setHasJoined] = useState(false);
 
-  // Mock data - will be replaced with WebSocket state
-  const [players] = useState<Player[]>([
-    {
-      id: "1",
-      name: "WikiMaster",
-      isHost: true,
-      isReady: true,
-      country: "US",
-      rating: 1850,
-      gamesPlayed: 42,
-      bestTime: "0:23.45",
+  // Add system message to activity feed - defined first so it can be used in hooks
+  const addSystemMessage = useCallback((text: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        type: "system",
+        text,
+        timestamp: new Date(),
+      },
+    ]);
+  }, []);
+
+  // Handle race started - navigate to game
+  const handleRaceStarted = useCallback(
+    (data: { startArticle: string; endArticle: string }) => {
+      // Mark when race started to prevent re-joining during page transition
+      sessionStorage.setItem("wiki-race-started-at", Date.now().toString());
+      navigate(
+        `/game?start=${encodeURIComponent(
+          data.startArticle
+        )}&end=${encodeURIComponent(
+          data.endArticle
+        )}&mode=race&lobby=${lobbyCode}&player=${encodeURIComponent(
+          playerName
+        )}`
+      );
     },
+    [navigate, lobbyCode, playerName]
+  );
+
+  // Initialize multiplayer hook
+  const {
+    isConnected,
+    players: multiplayerPlayers,
+    roomState,
+    error,
+    connect,
+    disconnect,
+    joinRoom,
+    leaveRoom,
+    startRace,
+  } = useMultiplayer({
+    onRaceStarted: handleRaceStarted,
+    onError: (err) => {
+      addSystemMessage(`Error: ${err}`);
+    },
+  });
+
+  // Connect to WebSocket on mount
+  useEffect(() => {
+    // Small delay to let component stabilize after HMR
+    const timer = setTimeout(() => {
+      connect();
+      addSystemMessage("Connecting to server...");
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      // leaveRoom and disconnect are handled internally by the hook
+      disconnect();
+    };
+  }, [connect, disconnect, addSystemMessage]);
+
+  // Join room when connected - with small delay to ensure connection is stable
+  useEffect(() => {
+    // Skip joining if we're already in a race (prevents re-join during page transition)
+    // Only skip if the race started recently (within 10 seconds)
+    const raceStartedAt = sessionStorage.getItem("wiki-race-started-at");
+    if (raceStartedAt) {
+      const elapsed = Date.now() - parseInt(raceStartedAt, 10);
+      if (elapsed < 10000) {
+        // Race just started, we're in a page transition
+        return;
+      }
+      // Stale flag, clear it
+      sessionStorage.removeItem("wiki-race-started-at");
+    }
+
+    if (isConnected && !hasJoined) {
+      const timer = setTimeout(() => {
+        addSystemMessage("Connected! Joining lobby...");
+        joinRoom(lobbyCode, playerName, startArticle, endArticle);
+        setHasJoined(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    isConnected,
+    hasJoined,
+    lobbyCode,
+    playerName,
+    startArticle,
+    endArticle,
+    joinRoom,
+    addSystemMessage,
   ]);
+
+  // Update messages when room state changes
+  useEffect(() => {
+    if (roomState) {
+      addSystemMessage(`Joined lobby: ${lobbyCode}`);
+    }
+  }, [roomState?.id]);
+
+  // Track player joins/leaves
+  useEffect(() => {
+    if (multiplayerPlayers.length > 0) {
+      const lastPlayer = multiplayerPlayers[multiplayerPlayers.length - 1];
+      if (lastPlayer && messages.length > 0) {
+        // Only add if this isn't our initial join
+        const alreadyAnnounced = messages.some(
+          (m) => m.text.includes(lastPlayer.name) && m.text.includes("joined")
+        );
+        if (!alreadyAnnounced && multiplayerPlayers.length > 1) {
+          addSystemMessage(`${lastPlayer.name} joined the lobby.`);
+        }
+      }
+    }
+  }, [multiplayerPlayers.length]);
+
+  // Convert multiplayer players to display format
+  // If no players from server, show self as fallback
+  const serverPlayers = multiplayerPlayers.map(
+    (p: MultiplayerPlayer, index: number) => ({
+      id: p.id,
+      name: p.name,
+      isHost: index === 0, // First player is host
+      isReady: true,
+      country: "US", // Default for now
+      rating: 1500 + Math.floor(Math.random() * 500), // Mock rating
+      gamesPlayed: Math.floor(Math.random() * 50),
+      bestTime: "-",
+    })
+  );
+
+  // Fallback: show yourself if not connected to server
+  const displayPlayers =
+    serverPlayers.length > 0
+      ? serverPlayers
+      : [
+          {
+            id: "self",
+            name: playerName,
+            isHost: true,
+            isReady: true,
+            country: "US",
+            rating: 1650,
+            gamesPlayed: 0,
+            bestTime: "-",
+          },
+        ];
+
+  // Am I the host? (first player in the list)
+  const isHost =
+    displayPlayers.length > 0 && displayPlayers[0]?.name === playerName;
+
+  const maxPlayers = 8;
+  const emptySlots = maxPlayers - displayPlayers.length;
 
   const getCountryFlagUrl = (countryCode: string) => {
     return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
   };
-
-  const [messages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      type: "system",
-      text: "Connected to lobby.",
-      timestamp: new Date(),
-    },
-    {
-      id: "2",
-      type: "system",
-      text: "You created the lobby.",
-      timestamp: new Date(),
-    },
-  ]);
-
-  const [chatInput, setChatInput] = useState("");
-
-  const isHost = players.find((p) => p.id === "1")?.isHost ?? false;
-  const maxPlayers = 8;
-  const emptySlots = maxPlayers - players.length;
-
-  // Generate random lobby code
-  function generateLobbyCode(): string {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  }
 
   // Copy lobby code
   const handleCopyCode = () => {
@@ -110,18 +249,24 @@ const RaceLobby = () => {
     setChatInput("");
   };
 
-  // Start the race
+  // Start the race (anyone can start for testing)
   const handleStartRace = () => {
-    navigate(
-      `/game?start=${encodeURIComponent(startArticle)}&end=${encodeURIComponent(
-        endArticle
-      )}&mode=race&lobby=${lobbyCode}`
-    );
+    addSystemMessage("Starting race...");
+    startRace();
+    // Also navigate locally in case server doesn't respond
+    setTimeout(() => {
+      navigate(
+        `/game?start=${encodeURIComponent(
+          startArticle
+        )}&end=${encodeURIComponent(endArticle)}&mode=race&lobby=${lobbyCode}`
+      );
+    }, 500);
   };
 
   // Leave lobby
   const handleLeave = () => {
-    navigate("/");
+    leaveRoom();
+    navigate("/lobby-browser");
   };
 
   return (
@@ -135,9 +280,7 @@ const RaceLobby = () => {
               <div className="leaderboard-nav-links">
                 <button
                   className="leaderboard-nav-button"
-                  onClick={() =>
-                    navigate("/", { state: { direction: "back" } })
-                  }
+                  onClick={handleLeave}
                 >
                   PLAY
                 </button>
@@ -180,19 +323,15 @@ const RaceLobby = () => {
                 <div className="profile-row">
                   <div className="profile-avatar-placeholder"></div>
                   <div className="profile-info">
-                    <div className="profile-name">{players[0]?.name}</div>
+                    <div className="profile-name">{playerName}</div>
                     <div className="profile-stats">
                       <div className="profile-stat">
                         <span className="profile-stat-label">Games</span>
-                        <span className="profile-stat-value">
-                          {players[0]?.gamesPlayed || 0}
-                        </span>
+                        <span className="profile-stat-value">0</span>
                       </div>
                       <div className="profile-stat">
                         <span className="profile-stat-label">Best</span>
-                        <span className="profile-stat-value">
-                          {players[0]?.bestTime || "-"}
-                        </span>
+                        <span className="profile-stat-value">-</span>
                       </div>
                     </div>
                   </div>
@@ -298,7 +437,7 @@ const RaceLobby = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {players.map((player, index) => (
+                    {displayPlayers.map((player, index) => (
                       <tr key={player.id}>
                         <td>
                           <div className="leaderboard-player">
@@ -314,6 +453,7 @@ const RaceLobby = () => {
                             />
                             <span className="leaderboard-username">
                               {player.name}
+                              {player.name === playerName && " (You)"}
                             </span>
                           </div>
                         </td>
@@ -342,7 +482,7 @@ const RaceLobby = () => {
                           <div className="leaderboard-player">
                             <span className="leaderboard-rank-slot">
                               <span className="leaderboard-rank-number">
-                                {players.length + i + 1}
+                                {displayPlayers.length + i + 1}
                               </span>
                             </span>
                             <div className="leaderboard-flag-placeholder" />
@@ -368,7 +508,7 @@ const RaceLobby = () => {
               </div>
             </div>
             <div className="players-table-footer">
-              Players ({players.length}/{maxPlayers})
+              Players ({displayPlayers.length}/{maxPlayers})
             </div>
 
             {/* Chat / Activity */}
@@ -384,6 +524,14 @@ const RaceLobby = () => {
                       <span className="chat-text">{msg.text}</span>
                     </div>
                   ))}
+                  {error && (
+                    <div
+                      className="chat-message system"
+                      style={{ color: "#a44" }}
+                    >
+                      <span className="chat-text">Error: {error}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="chat-input-row">
                   <span className="chat-say">Say:</span>
@@ -404,17 +552,12 @@ const RaceLobby = () => {
               <button className="race-action-btn invite-btn">
                 Invite Friends
               </button>
-              {isHost && (
-                <button
-                  className="race-action-btn start-btn"
-                  onClick={handleStartRace}
-                >
-                  Start
-                </button>
-              )}
-              {!isHost && (
-                <button className="race-action-btn ready-btn">Ready Up</button>
-              )}
+              <button
+                className="race-action-btn start-btn"
+                onClick={handleStartRace}
+              >
+                Start
+              </button>
             </div>
           </div>
         </div>

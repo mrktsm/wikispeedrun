@@ -701,6 +701,18 @@
   background: linear-gradient(to bottom, #5b5, #494);
 }
 
+.ready-btn-outline {
+  background: transparent;
+  color: #0066cc;
+  border: 1px solid #0066cc;
+}
+
+.ready-btn-outline:hover {
+  background: rgba(0, 102, 204, 0.1);
+  color: #0077ee;
+  border-color: #0077ee;
+}
+
 /* Scrollbar */
 .chat-messages::-webkit-scrollbar {
   width: 6px;
