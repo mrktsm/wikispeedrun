@@ -400,7 +400,7 @@ const LobbyBrowser = () => {
                         </td>
                         <td>
                           <span className="lobby-route">
-                            {lobby.startArticle} → {lobby.endArticle}
+                            {lobby.startArticle} to {lobby.endArticle}
                           </span>
                         </td>
                         <td>
@@ -432,7 +432,7 @@ const LobbyBrowser = () => {
                       </tr>
                     )}
                     {/* Empty placeholder rows to fill space */}
-                    {Array.from({ length: 3 }).map((_, index) => {
+                    {Array.from({ length: 4 }).map((_, index) => {
                       // Calculate if this row should be odd or even based on filtered lobbies length
                       const rowIndex = filteredLobbies.length + index;
                       const isOdd = rowIndex % 2 === 0;

@@ -431,7 +431,10 @@ const Leaderboard = () => {
                 </div>
               </div>
 
-              <div className="game-button middle">
+              <div
+                className="game-button middle"
+                onClick={() => navigate("/lobby-browser")}
+              >
                 <div className="game-button-icon game-button-icon-large">
                   <IoPeopleSharp className="game-button-icon-svg" />
                 </div>

@@ -99,9 +99,8 @@
 
 /* Main Content */
 .race-lobby-main {
-  padding: 0;
-  width: min(95vw, 1200px);
-  max-width: 100%;
+  padding: 0 16px 16px 16px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
@@ -114,7 +113,7 @@
 .race-lobby-grid {
   display: grid;
   grid-template-columns: minmax(clamp(200px, 20vw, 280px), 280px) 1fr;
-  gap: 8px;
+  gap: 12px;
   align-items: stretch;
 }
 
@@ -128,7 +127,7 @@
 .race-lobby-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   height: 100%;
 }
 
@@ -386,7 +385,7 @@
 .race-lobby-right {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 /* Players Card */

@@ -215,7 +215,7 @@ const RaceLobby = () => {
                       onChange={(e) => setStartArticle(e.target.value)}
                       disabled={!isHost}
                     />
-                    <span className="route-arrow">→</span>
+                    <span className="route-arrow">to</span>
                     <input
                       type="text"
                       className="route-input"

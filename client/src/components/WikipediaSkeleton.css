@@ -28,7 +28,7 @@
   width: 45%;
   margin-bottom: 20px;
   border-radius: 4px;
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid #333; /* Default dark to avoid white flash */
   padding-bottom: 10px;
 }
 
@@ -42,8 +42,8 @@
   width: 22em;
   margin: 0.5em 0 0.5em 1.5em;
   padding: 8px;
-  border: 1px solid #e0e0e0;
-  background: #f8f9fa;
+  border: 1px solid #333; /* Default dark to avoid white flash */
+  background: #242424; /* Default dark to avoid white flash */
   border-radius: 2px;
 }
 
@@ -76,7 +76,7 @@
   width: 30%;
   margin: 24px 0 12px 0;
   border-radius: 4px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #333; /* Default dark to avoid white flash */
   clear: none;
 }
 
