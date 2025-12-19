@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { FaMousePointer, FaICursor, FaHandPointer } from "react-icons/fa";
 import SpeedrunWidget from "../components/SpeedrunWidget";
 import type {
   SpeedrunWidgetRef,
@@ -24,6 +25,11 @@ interface MultiplayerFinishData {
 let globalConnectionAttempted = false;
 let globalRejoinAttempted = false;
 
+// Module-level cached icon HTML (persists across re-renders)
+let cachedPointerIconHTML: string | null = null;
+let cachedTextIconHTML: string | null = null;
+let cachedHandIconHTML: string | null = null;
+
 const Game = () => {
   const [searchParams] = useSearchParams();
   const [hudVisible, setHudVisible] = useState(false);
@@ -36,8 +42,11 @@ const Game = () => {
   } | null>(null);
   const [finishedPlayers, setFinishedPlayers] = useState<MultiplayerFinishData[]>([]);
   const [raceStartTime] = useState(() => Date.now());
-  const [otherCursors, setOtherCursors] = useState<Map<string, CursorUpdate>>(new Map());
   const [currentArticle, setCurrentArticle] = useState("");
+  
+  // Use ref for cursor data to avoid React re-renders on every cursor update
+  const cursorDataRef = useRef<Map<string, CursorUpdate>>(new Map());
+  const cursorContainerRef = useRef<HTMLDivElement>(null);
   
   const speedrunWidgetRef = useRef<SpeedrunWidgetRef>(null);
   const hasFinishedRef = useRef(false);
@@ -59,13 +68,156 @@ const Game = () => {
     });
   }, []);
 
-  // Handle cursor updates from other players
+  // Cache icon HTML to avoid re-rendering
+  const pointerIconCacheRef = useRef<HTMLDivElement>(null);
+  const textIconCacheRef = useRef<HTMLDivElement>(null);
+  const handIconCacheRef = useRef<HTMLDivElement>(null);
+
+  // Cache icon HTML on mount
+  useEffect(() => {
+    const cacheIcons = () => {
+      if (pointerIconCacheRef.current && !cachedPointerIconHTML) {
+        const iconElement = pointerIconCacheRef.current.querySelector('svg');
+        if (iconElement) {
+          cachedPointerIconHTML = iconElement.outerHTML;
+        }
+      }
+      if (textIconCacheRef.current && !cachedTextIconHTML) {
+        const iconElement = textIconCacheRef.current.querySelector('svg');
+        if (iconElement) {
+          cachedTextIconHTML = iconElement.outerHTML;
+        }
+      }
+      if (handIconCacheRef.current && !cachedHandIconHTML) {
+        const iconElement = handIconCacheRef.current.querySelector('svg');
+        if (iconElement) {
+          cachedHandIconHTML = iconElement.outerHTML;
+        }
+      }
+      
+      if ((!cachedPointerIconHTML && pointerIconCacheRef.current) ||
+          (!cachedTextIconHTML && textIconCacheRef.current) ||
+          (!cachedHandIconHTML && handIconCacheRef.current)) {
+        setTimeout(cacheIcons, 50);
+      }
+    };
+    setTimeout(cacheIcons, 100);
+  }, []);
+
+  // Handle cursor updates from other players - direct DOM manipulation (no re-render)
   const handleCursorUpdate = useCallback((data: CursorUpdate) => {
-    setOtherCursors(prev => {
-      const next = new Map(prev);
-      next.set(data.playerId, data);
-      return next;
-    });
+    cursorDataRef.current.set(data.playerId, data);
+    
+    // Direct DOM update - bypasses React for performance
+    const container = cursorContainerRef.current;
+    if (!container) return;
+    
+    let cursorEl = container.querySelector(`[data-player-id="${data.playerId}"]`) as HTMLElement;
+    
+    // Create cursor element if it doesn't exist
+    if (!cursorEl) {
+      cursorEl = document.createElement('div');
+      cursorEl.className = 'other-player-cursor';
+      cursorEl.setAttribute('data-player-id', data.playerId);
+      
+      // Use default pointer icon initially
+      const iconHTML = cachedPointerIconHTML || '';
+      cursorEl.innerHTML = `
+        <div class="cursor-pointer">
+          ${iconHTML}
+        </div>
+        <span class="cursor-name">${data.playerName}</span>
+      `;
+      container.appendChild(cursorEl);
+    }
+    
+    // Update position
+    cursorEl.style.transform = `translate(calc(${data.x}vw - 2px), calc(${data.y}vh - 2px))`;
+    cursorEl.setAttribute('data-article', data.article);
+    
+    // Detect cursor type locally and update icon
+    const xPx = (data.x / 100) * window.innerWidth;
+    const yPx = (data.y / 100) * window.innerHeight;
+    const element = document.elementFromPoint(xPx, yPx);
+    
+    let cursorType = 'pointer'; // Default to pointer
+    if (element) {
+      const target = element as HTMLElement;
+      const computedStyle = window.getComputedStyle(target);
+      const cursor = computedStyle.cursor;
+      
+      // Links should show hand
+      if (target.tagName === 'A' || target.closest('a')) {
+        cursorType = 'hand';
+      } 
+      // Images should show hand
+      else if (target.tagName === 'IMG' || target.closest('img')) {
+        cursorType = 'hand';
+      } 
+      // Text inputs should show text cursor
+      else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        cursorType = 'text';
+      }
+      // Check computed cursor style - browser already does precise hit-testing!
+      else if (cursor === 'text') {
+        cursorType = 'text';
+      }
+      // Check for pointer types
+      else if (cursor === 'pointer' || cursor === 'grab' || cursor === 'grabbing') {
+        cursorType = 'pointer';
+      }
+      // If cursor is 'auto' or 'default', check if we're over text by walking up the tree
+      else if (cursor === 'auto' || cursor === 'default') {
+        // Walk up the DOM tree to find an element with text cursor
+        let currentEl: HTMLElement | null = target;
+        while (currentEl) {
+          const style = window.getComputedStyle(currentEl);
+          if (style.cursor === 'text') {
+            cursorType = 'text';
+            break;
+          }
+          // Stop at wiki-content boundary
+          if (currentEl.classList.contains('wiki-content')) {
+            break;
+          }
+          currentEl = currentEl.parentElement;
+        }
+      }
+    }
+    
+    // Update icon based on cursor type - always update to ensure it's correct
+    const previousCursorType = cursorEl.getAttribute('data-cursor-type');
+    
+    // Always update if type changed, or if we don't have an icon yet
+    if (previousCursorType !== cursorType || !cursorEl.querySelector('.cursor-pointer')?.innerHTML.trim()) {
+      let iconHTML: string | null = null;
+      if (cursorType === 'text' && cachedTextIconHTML) {
+        iconHTML = cachedTextIconHTML;
+      } else if (cursorType === 'hand' && cachedHandIconHTML) {
+        iconHTML = cachedHandIconHTML;
+      } else if (cachedPointerIconHTML) {
+        iconHTML = cachedPointerIconHTML;
+      }
+      
+      if (iconHTML) {
+        const cursorPointerDiv = cursorEl.querySelector('.cursor-pointer');
+        if (cursorPointerDiv) {
+          cursorPointerDiv.innerHTML = iconHTML;
+        }
+      }
+      
+      cursorEl.setAttribute('data-cursor-type', cursorType);
+    }
+    
+    // Apply cursor type styling via classes
+    cursorEl.classList.remove('cursor-pointer-type', 'cursor-text-type', 'cursor-hand-type');
+    if (cursorType === 'pointer') {
+      cursorEl.classList.add('cursor-pointer-type');
+    } else if (cursorType === 'text') {
+      cursorEl.classList.add('cursor-text-type');
+    } else if (cursorType === 'hand') {
+      cursorEl.classList.add('cursor-hand-type');
+    }
   }, []);
 
   // Initialize multiplayer if needed
@@ -215,7 +367,44 @@ const Game = () => {
       lastCursorSendRef.current = now;
       lastPositionRef.current = { x, y };
 
-      sendCursor(x, y, currentArticle || startArticle);
+      // Detect cursor type from element under mouse
+      const target = e.target as HTMLElement;
+      let cursorType: string | undefined;
+      
+      if (target.tagName === 'A' || target.closest('a')) {
+        cursorType = 'pointer'; // Pointer cursor for links
+      } else if (target.tagName === 'IMG' || target.closest('img')) {
+        cursorType = 'hand'; // Hand cursor for images
+      } else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        cursorType = 'text'; // Text cursor for inputs
+      } else {
+        const computedStyle = window.getComputedStyle(target);
+        const cursor = computedStyle.cursor;
+        
+        // Check computed cursor style - browser already does precise hit-testing!
+        if (cursor === 'text') {
+          cursorType = 'text';
+        } else if (cursor === 'pointer' || cursor === 'grab' || cursor === 'grabbing') {
+          cursorType = 'pointer';
+        } else if (cursor === 'auto' || cursor === 'default') {
+          // Walk up the DOM tree to find an element with text cursor
+          let currentEl: HTMLElement | null = target;
+          while (currentEl) {
+            const style = window.getComputedStyle(currentEl);
+            if (style.cursor === 'text') {
+              cursorType = 'text';
+              break;
+            }
+            // Stop at wiki-content boundary
+            if (currentEl.classList.contains('wiki-content')) {
+              break;
+            }
+            currentEl = currentEl.parentElement;
+          }
+        }
+      }
+
+      sendCursor(x, y, currentArticle || startArticle, cursorType);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -273,12 +462,19 @@ const Game = () => {
     }));
 
   // Get cursors on the same article
-  const visibleCursors = Array.from(otherCursors.values()).filter(
-    cursor => cursor.article === (currentArticle || startArticle)
-  );
 
   return (
     <div className="game-page">
+      {/* Hidden icon cache for extracting HTML */}
+      <div ref={pointerIconCacheRef} style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none' }}>
+        <FaMousePointer />
+      </div>
+      <div ref={textIconCacheRef} style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none' }}>
+        <FaICursor />
+      </div>
+      <div ref={handIconCacheRef} style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none' }}>
+        <FaHandPointer />
+      </div>
       <div className="game-article-container">
         <WikipediaViewer
           initialTitle={startArticle}
@@ -290,28 +486,8 @@ const Game = () => {
           endArticle={endArticle}
           onDestinationReached={() => setRouteCompleted(true)}
         />
-        {/* Other players' cursors */}
-        {isMultiplayer && visibleCursors.map(cursor => (
-          <div
-            key={cursor.playerId}
-            className="other-player-cursor"
-            style={{
-              transform: `translate(calc(${cursor.x}vw - 2px), calc(${cursor.y}vh - 2px))`,
-            }}
-          >
-            <div className="cursor-pointer">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M5.65376 3.02458L21.8974 11.1159C22.8904 11.6121 22.8904 13.0298 21.8974 13.526L5.65376 21.6173C4.5889 22.1499 3.38937 21.2106 3.64892 20.0503L5.32608 12.3211L3.64892 4.59164C3.38937 3.43129 4.5889 2.492 5.65376 3.02458Z"
-                  fill="currentColor"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </div>
-            <span className="cursor-name">{cursor.playerName}</span>
-          </div>
-        ))}
+        {/* Other players' cursors - rendered via direct DOM manipulation for performance */}
+        {isMultiplayer && <div ref={cursorContainerRef} className="cursor-container" />}
       </div>
       <div className={`game-hud ${hudVisible ? "visible" : ""}`}>
         {/* Multiplayer progress indicator */}

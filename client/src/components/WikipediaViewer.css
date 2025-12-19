@@ -159,6 +159,7 @@
   border-bottom: 1px solid var(--wiki-border-base);
   overflow: hidden; /* Creates block formatting context - doesn't extend under floats */
   color: var(--wiki-color-base);
+  cursor: text;
 }
 
 /* h3 and h4 use sans-serif */
@@ -171,6 +172,7 @@
   padding-top: 0.3em;
   overflow: hidden; /* Creates block formatting context - doesn't extend under floats */
   color: var(--wiki-color-base);
+  cursor: text;
 }
 
 .wiki-content h4 {
@@ -182,18 +184,21 @@
   padding-top: 0.2em;
   overflow: hidden; /* Creates block formatting context - doesn't extend under floats */
   color: var(--wiki-color-base);
+  cursor: text;
 }
 
 /* Paragraphs - allow text to wrap around floated images */
 .wiki-content p {
   margin: 1em 0;
   overflow: visible;
+  cursor: text;
 }
 
 /* Links */
 .wiki-content a {
   color: var(--wiki-color-progressive);
   text-decoration: none;
+  cursor: pointer; /* Override text cursor for links */
 }
 
 .wiki-content a:hover {
@@ -218,6 +223,7 @@
 
 .wiki-content li {
   margin-bottom: 0.25em;
+  cursor: text;
 }
 
 /* ===================
