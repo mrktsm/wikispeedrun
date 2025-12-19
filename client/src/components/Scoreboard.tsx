@@ -30,6 +30,28 @@ const Scoreboard = () => {
     return gradients[Math.abs(hash) % gradients.length];
   };
 
+  // Get the primary color from the gradient for the player name
+  const getPlayerColor = (username: string): string => {
+    const colors = [
+      "#FF6B6B", // Red
+      "#4ECDC4", // Teal
+      "#45B7D1", // Blue
+      "#FFA07A", // Light Salmon
+      "#98D8C8", // Mint
+      "#F7DC6F", // Yellow
+      "#BB8FCE", // Purple
+      "#85C1E2", // Sky Blue
+      "#F8B739", // Orange
+      "#52BE80", // Green
+    ];
+    // Use the same hash function to get consistent color per username
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+      hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   // Sample data
   const players: Player[] = [
     {
@@ -68,8 +90,13 @@ const Scoreboard = () => {
     <div className="scoreboard-widget">
       <div className="scoreboard-header">
         <div className="scoreboard-title">
-          <div>Scoreboard</div>
-          <div className="subtitle">Links Diff | Links Clicked</div>
+          <div className="title-row">
+            <span>Scoreboard</span>
+            <div className="stats-header-labels">
+              <span className="stats-header-diff">Diff</span>
+              <span className="stats-header-links">Links</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -82,7 +109,12 @@ const Scoreboard = () => {
             >
               {player.username.charAt(0).toUpperCase()}
             </div>
-            <div className="player-name">{player.username}</div>
+            <div 
+              className="player-name"
+              style={{ color: getPlayerColor(player.username) }}
+            >
+              {player.username}
+            </div>
             <div className="player-stats">
               <span
                 className={`score-diff ${

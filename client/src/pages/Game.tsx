@@ -8,6 +8,7 @@ import type {
 } from "../components/SpeedrunWidget";
 import WikipediaViewer from "../components/WikipediaViewer";
 import VictoryModal from "../components/VictoryModal";
+import Scoreboard from "../components/Scoreboard";
 import { useMultiplayer, type Player, type CursorUpdate } from "../hooks/useMultiplayer";
 import "../App.css";
 import "./Game.css";
@@ -490,6 +491,8 @@ const Game = () => {
         {isMultiplayer && <div ref={cursorContainerRef} className="cursor-container" />}
       </div>
       <div className={`game-hud ${hudVisible ? "visible" : ""}`}>
+        {/* Scoreboard */}
+        {isMultiplayer && <Scoreboard />}
         {/* Multiplayer progress indicator */}
         {isMultiplayer && otherPlayersProgress.length > 0 && (
           <div className="multiplayer-progress">
@@ -524,6 +527,7 @@ const Game = () => {
           endArticle={endArticle}
           isRunning={articleLoaded && hudVisible}
           isStopped={routeCompleted}
+          isMultiplayer={isMultiplayer}
         />
       </div>
       {showVictoryModal && gameStats && (

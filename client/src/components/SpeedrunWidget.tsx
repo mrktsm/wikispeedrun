@@ -20,6 +20,7 @@ interface SpeedrunWidgetProps {
   endArticle?: string;
   isRunning?: boolean;
   isStopped?: boolean;
+  isMultiplayer?: boolean;
 }
 
 export interface SegmentData {
@@ -40,6 +41,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
     {
       gameMode = "Single Player",
       endArticle = "Link to reach",
+      isMultiplayer = false,
       isRunning = false,
       isStopped = false,
     },
@@ -233,7 +235,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
     }, [isRunning, isStopped]);
 
     return (
-      <div className="speedrun-widget">
+      <div className={`speedrun-widget ${isMultiplayer ? 'multiplayer-mode' : ''}`}>
         <div className="speedrun-header">
           <div className="game-title">
             <div>{endArticle.replace(/_/g, " ")}</div>

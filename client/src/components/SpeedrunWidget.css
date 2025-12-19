@@ -21,6 +21,13 @@
   z-index: 1000;
 }
 
+/* Move to bottom-left when scoreboard is visible (multiplayer mode) */
+.speedrun-widget.multiplayer-mode {
+  top: auto;
+  bottom: 10px;
+  left: 10px;
+}
+
 .speedrun-header {
   margin-bottom: 0;
 }
