@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { FaTrophy, FaCog, FaSignInAlt, FaBolt } from "react-icons/fa";
 import {
   IoSearch,
-  IoPersonSharp,
-  IoPeopleSharp,
   IoShuffle,
   IoSwapHorizontal,
   IoChevronDown,
   IoChevronUp,
 } from "react-icons/io5";
+import { IoIosPerson } from "react-icons/io";
 import fightIcon from "../assets/fight-svgrepo-com(1).svg";
+import raceFlagIcon from "../assets/race-flag-svgrepo-com.svg";
 import wikipediaLogo from "../assets/wikipedia-logotype-of-earth-puzzle-svgrepo-com.svg";
 import "./Leaderboard.css";
 
@@ -99,7 +99,9 @@ const Leaderboard = () => {
   const endDropdownRef = useRef<HTMLDivElement>(null);
 
   // Debounced search
-  const debounceRef = useRef<{ start?: NodeJS.Timeout; end?: NodeJS.Timeout }>({});
+  const debounceRef = useRef<{ start?: NodeJS.Timeout; end?: NodeJS.Timeout }>(
+    {}
+  );
 
   const searchStart = useCallback(
     (query: string) => {
@@ -205,7 +207,11 @@ const Leaderboard = () => {
 
   const handlePlayNow = () => {
     if (startArticle && endArticle) {
-      navigate(`/game?start=${encodeURIComponent(startArticle)}&end=${encodeURIComponent(endArticle)}`);
+      navigate(
+        `/game?start=${encodeURIComponent(
+          startArticle
+        )}&end=${encodeURIComponent(endArticle)}`
+      );
       setShowSoloModal(false);
     }
   };
@@ -217,7 +223,9 @@ const Leaderboard = () => {
       getRandomWikipediaArticle(language),
     ]);
     navigate(
-      `/game?start=${encodeURIComponent(randomStart)}&end=${encodeURIComponent(randomEnd)}`
+      `/game?start=${encodeURIComponent(randomStart)}&end=${encodeURIComponent(
+        randomEnd
+      )}`
     );
     setShowSoloModal(false);
   };
@@ -419,30 +427,34 @@ const Leaderboard = () => {
             <div className="game-button-group">
               <div
                 className="game-button first"
-                onClick={() => setShowSoloModal(true)}
+                onClick={() => navigate("/lobby-browser")}
               >
-                <div className="game-button-icon game-button-icon-small">
-                  <IoPersonSharp className="game-button-icon-svg" />
+                <div className="game-button-icon game-button-icon-large">
+                  <img
+                    src={raceFlagIcon}
+                    alt="Race"
+                    className="game-button-icon-img"
+                  />
                 </div>
                 <div className="game-button-info">
-                  <div className="game-button-title">Solo</div>
+                  <div className="game-button-title">Race</div>
                   <div className="game-button-meta">
-                    Race against the clock solo
+                    Compete with multiple players
                   </div>
                 </div>
               </div>
 
               <div
                 className="game-button middle"
-                onClick={() => navigate("/lobby-browser")}
+                onClick={() => setShowSoloModal(true)}
               >
-                <div className="game-button-icon game-button-icon-large">
-                  <IoPeopleSharp className="game-button-icon-svg" />
+                <div className="game-button-icon game-button-icon-small">
+                  <IoIosPerson className="game-button-icon-svg" />
                 </div>
                 <div className="game-button-info">
-                  <div className="game-button-title">Race</div>
+                  <div className="game-button-title">Solo</div>
                   <div className="game-button-meta">
-                    Compete with multiple players
+                    Race against the clock solo
                   </div>
                 </div>
               </div>
@@ -472,7 +484,14 @@ const Leaderboard = () => {
 
           {/* Center - Leaderboard Table */}
           <div className="leaderboard-center">
-            <div className="leaderboard-table-wrapper" style={{ '--wikipedia-logo': `url(${wikipediaLogo})` } as React.CSSProperties}>
+            <div
+              className="leaderboard-table-wrapper"
+              style={
+                {
+                  "--wikipedia-logo": `url(${wikipediaLogo})`,
+                } as React.CSSProperties
+              }
+            >
               <table className="leaderboard-table">
                 <thead>
                   <tr>
@@ -613,8 +632,14 @@ const Leaderboard = () => {
 
       {/* Solo Modal */}
       {showSoloModal && (
-        <div className="solo-modal-overlay" onClick={() => setShowSoloModal(false)}>
-          <div className="solo-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="solo-modal-overlay"
+          onClick={() => setShowSoloModal(false)}
+        >
+          <div
+            className="solo-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="solo-modal-header">
               <h2>Solo Game Setup</h2>
               <button
@@ -656,28 +681,36 @@ const Leaderboard = () => {
                         setStartArticle(e.target.value);
                         searchStart(e.target.value);
                       }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (startSuggestions.length > 0) {
-                          handleSelectStartSuggestion(startSuggestions[0]);
-                        } else if (startArticle.trim()) {
-                          setShowStartSuggestions(false);
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (startSuggestions.length > 0) {
+                            handleSelectStartSuggestion(startSuggestions[0]);
+                          } else if (startArticle.trim()) {
+                            setShowStartSuggestions(false);
+                          }
                         }
-                      }
-                    }}
+                      }}
                       onFocus={() => {
-                        if (startSuggestions.length > 0) setShowStartSuggestions(true);
+                        if (startSuggestions.length > 0)
+                          setShowStartSuggestions(true);
                       }}
                     />
-                    {isLoadingStart && <span className="solo-loading-indicator">...</span>}
+                    {isLoadingStart && (
+                      <span className="solo-loading-indicator">...</span>
+                    )}
                     {showStartSuggestions && startSuggestions.length > 0 && (
-                      <div ref={startDropdownRef} className="solo-suggestions-dropdown">
+                      <div
+                        ref={startDropdownRef}
+                        className="solo-suggestions-dropdown"
+                      >
                         {startSuggestions.map((suggestion, index) => (
                           <div
                             key={index}
                             className="solo-suggestion-item"
-                            onClick={() => handleSelectStartSuggestion(suggestion)}
+                            onClick={() =>
+                              handleSelectStartSuggestion(suggestion)
+                            }
                           >
                             {suggestion}
                           </div>
@@ -686,7 +719,9 @@ const Leaderboard = () => {
                     )}
                   </div>
                   <button
-                    className={`solo-shuffle-btn ${isRandomizingStart ? "loading" : ""}`}
+                    className={`solo-shuffle-btn ${
+                      isRandomizingStart ? "loading" : ""
+                    }`}
                     onClick={handleRandomStart}
                     title="Random article"
                     disabled={isRandomizingStart}
@@ -722,28 +757,36 @@ const Leaderboard = () => {
                         setEndArticle(e.target.value);
                         searchEnd(e.target.value);
                       }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (endSuggestions.length > 0) {
-                          handleSelectEndSuggestion(endSuggestions[0]);
-                        } else if (endArticle.trim()) {
-                          setShowEndSuggestions(false);
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (endSuggestions.length > 0) {
+                            handleSelectEndSuggestion(endSuggestions[0]);
+                          } else if (endArticle.trim()) {
+                            setShowEndSuggestions(false);
+                          }
                         }
-                      }
-                    }}
+                      }}
                       onFocus={() => {
-                        if (endSuggestions.length > 0) setShowEndSuggestions(true);
+                        if (endSuggestions.length > 0)
+                          setShowEndSuggestions(true);
                       }}
                     />
-                    {isLoadingEnd && <span className="solo-loading-indicator">...</span>}
+                    {isLoadingEnd && (
+                      <span className="solo-loading-indicator">...</span>
+                    )}
                     {showEndSuggestions && endSuggestions.length > 0 && (
-                      <div ref={endDropdownRef} className="solo-suggestions-dropdown">
+                      <div
+                        ref={endDropdownRef}
+                        className="solo-suggestions-dropdown"
+                      >
                         {endSuggestions.map((suggestion, index) => (
                           <div
                             key={index}
                             className="solo-suggestion-item"
-                            onClick={() => handleSelectEndSuggestion(suggestion)}
+                            onClick={() =>
+                              handleSelectEndSuggestion(suggestion)
+                            }
                           >
                             {suggestion}
                           </div>
@@ -752,7 +795,9 @@ const Leaderboard = () => {
                     )}
                   </div>
                   <button
-                    className={`solo-shuffle-btn ${isRandomizingEnd ? "loading" : ""}`}
+                    className={`solo-shuffle-btn ${
+                      isRandomizingEnd ? "loading" : ""
+                    }`}
                     onClick={handleRandomEnd}
                     title="Random article"
                     disabled={isRandomizingEnd}
@@ -781,7 +826,11 @@ const Leaderboard = () => {
                   onClick={() => toggleSection("random")}
                 >
                   <span>Random Article Generator Settings</span>
-                  {expandedSection === "random" ? <IoChevronUp /> : <IoChevronDown />}
+                  {expandedSection === "random" ? (
+                    <IoChevronUp />
+                  ) : (
+                    <IoChevronDown />
+                  )}
                 </button>
                 {expandedSection === "random" && (
                   <div className="solo-collapsible-content">
@@ -804,16 +853,15 @@ const Leaderboard = () => {
               {/* Action Buttons */}
               <div className="solo-action-buttons">
                 <button
-                  className={`solo-play-btn ${startArticle && endArticle ? "active" : ""}`}
+                  className={`solo-play-btn ${
+                    startArticle && endArticle ? "active" : ""
+                  }`}
                   onClick={handlePlayNow}
                   disabled={!startArticle || !endArticle}
                 >
                   Play Now
                 </button>
-                <button
-                  className="solo-lucky-btn"
-                  onClick={handleFeelingLucky}
-                >
+                <button className="solo-lucky-btn" onClick={handleFeelingLucky}>
                   I'm Feeling Lucky
                 </button>
               </div>

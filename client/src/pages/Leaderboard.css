@@ -196,11 +196,15 @@
 }
 
 .game-button-icon-small .game-button-icon-svg {
-  font-size: 28px;
+  font-size: 32px;
 }
 
 .game-button-icon-large .game-button-icon-svg {
   font-size: 34px;
+}
+
+.game-button-icon-large {
+  overflow: hidden;
 }
 
 .game-button-info {
@@ -306,7 +310,7 @@
 }
 
 .leaderboard-table-wrapper::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -330,7 +334,11 @@
 }
 
 .leaderboard-table thead {
-  background: linear-gradient(to bottom, rgba(36, 36, 36, 0.9), rgba(21, 21, 21, 0.9));
+  background: linear-gradient(
+    to bottom,
+    rgba(36, 36, 36, 0.9),
+    rgba(21, 21, 21, 0.9)
+  );
 }
 
 .leaderboard-table th {

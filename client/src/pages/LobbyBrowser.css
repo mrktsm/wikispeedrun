@@ -267,13 +267,15 @@
 }
 
 .lobbies-table th {
-  padding: calc(0px + var(--extra-row-padding, 0px)) 16px;
+  padding: 10px 16px;
   text-align: left;
   font-size: 12px;
   font-weight: 500;
   color: #aaa;
   text-transform: capitalize;
   line-height: 17px;
+  height: 37px;
+  box-sizing: border-box;
 }
 
 .lobbies-table th.text-right {
