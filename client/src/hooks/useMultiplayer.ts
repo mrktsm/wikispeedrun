@@ -48,6 +48,7 @@ export interface CursorUpdate {
   x: number;
   y: number;
   article: string;
+  cursorType?: string;
 }
 
 interface UseMultiplayerOptions {
@@ -263,8 +264,8 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
     sendMessage(MessageTypes.FINISH, { time });
   }, [sendMessage]);
 
-  const sendCursor = useCallback((x: number, y: number, article: string) => {
-    sendMessage(MessageTypes.CURSOR, { x, y, article });
+  const sendCursor = useCallback((x: number, y: number, article: string, cursorType?: string) => {
+    sendMessage(MessageTypes.CURSOR, { x, y, article, cursorType });
   }, [sendMessage]);
 
   const disconnect = useCallback((sendLeave = false) => {

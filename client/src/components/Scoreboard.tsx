@@ -1,90 +1,95 @@
 import "./Scoreboard.css";
+import type { Player } from "../hooks/useMultiplayer";
 
-interface Player {
+interface ScoreboardPlayer {
   username: string;
   scoreDiff: string; // e.g., "+5", "-3", "0"
   linksClicked: number;
   isAhead: boolean | null; // true = ahead (green), false = behind (red), null = neutral
+  colorIndex: number; // Index for color assignment
 }
 
-const Scoreboard = () => {
-  // Generate a gradient based on username
-  const getPlayerGradient = (username: string): string => {
-    const gradients = [
-      "linear-gradient(135deg, #FF6B6B, #EE5A6F)", // Red gradient
-      "linear-gradient(135deg, #4ECDC4, #44A08D)", // Teal gradient
-      "linear-gradient(135deg, #45B7D1, #2193B0)", // Blue gradient
-      "linear-gradient(135deg, #FFA07A, #FF8C69)", // Light Salmon gradient
-      "linear-gradient(135deg, #98D8C8, #7BC4A4)", // Mint gradient
-      "linear-gradient(135deg, #F7DC6F, #F4D03F)", // Yellow gradient
-      "linear-gradient(135deg, #BB8FCE, #9B59B6)", // Purple gradient
-      "linear-gradient(135deg, #85C1E2, #5DADE2)", // Sky Blue gradient
-      "linear-gradient(135deg, #F8B739, #F39C12)", // Orange gradient
-      "linear-gradient(135deg, #52BE80, #27AE60)", // Green gradient
-    ];
-    // Simple hash function to get consistent gradient per username
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-      hash = username.charCodeAt(i) + ((hash << 5) - hash);
+interface ScoreboardProps {
+  players: Player[];
+  currentPlayerClicks: number;
+}
+
+// Cursor colors matching Game.tsx - these are drastically different colors
+const CURSOR_COLORS = [
+  "rgba(255, 71, 87, 1)",   // Red/Pink
+  "rgba(52, 152, 219, 1)",  // Blue
+  "rgba(46, 204, 113, 1)",  // Green
+  "rgba(241, 196, 15, 1)",  // Yellow
+  "rgba(155, 89, 182, 1)",  // Purple
+  "rgba(230, 126, 34, 1)",  // Orange
+  "rgba(26, 188, 156, 1)",  // Turquoise
+  "rgba(231, 76, 60, 1)",   // Red
+];
+
+// Hash function to get consistent color index from player name
+// This ensures the same name always gets the same color regardless of other players
+const hashStringToIndex = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash) % CURSOR_COLORS.length;
+};
+
+const Scoreboard = ({ players, currentPlayerClicks }: ScoreboardProps) => {
+  // Get color based on player name hash (matches cursor colors)
+  const getPlayerColor = (name: string): string => {
+    const index = hashStringToIndex(name);
+    const color = CURSOR_COLORS[index];
+    // Convert rgba to rgb for CSS color
+    const rgbMatch = color.match(/\d+/g);
+    if (rgbMatch && rgbMatch.length >= 3) {
+      const r = parseInt(rgbMatch[0]);
+      const g = parseInt(rgbMatch[1]);
+      const b = parseInt(rgbMatch[2]);
+      return `rgb(${r}, ${g}, ${b})`;
     }
-    return gradients[Math.abs(hash) % gradients.length];
+    return color;
   };
 
-  // Get the primary color from the gradient for the player name
-  const getPlayerColor = (username: string): string => {
-    const colors = [
-      "#FF6B6B", // Red
-      "#4ECDC4", // Teal
-      "#45B7D1", // Blue
-      "#FFA07A", // Light Salmon
-      "#98D8C8", // Mint
-      "#F7DC6F", // Yellow
-      "#BB8FCE", // Purple
-      "#85C1E2", // Sky Blue
-      "#F8B739", // Orange
-      "#52BE80", // Green
-    ];
-    // Use the same hash function to get consistent color per username
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-      hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  // Generate gradient from color (for avatar)
+  const getPlayerGradient = (name: string): string => {
+    const index = hashStringToIndex(name);
+    const color = CURSOR_COLORS[index];
+    // Extract RGB values and create a darker shade for gradient
+    const rgbMatch = color.match(/\d+/g);
+    if (rgbMatch && rgbMatch.length >= 3) {
+      const r = parseInt(rgbMatch[0]);
+      const g = parseInt(rgbMatch[1]);
+      const b = parseInt(rgbMatch[2]);
+      // Create darker shade (reduce by 30%)
+      const darkerR = Math.max(0, Math.floor(r * 0.7));
+      const darkerG = Math.max(0, Math.floor(g * 0.7));
+      const darkerB = Math.max(0, Math.floor(b * 0.7));
+      return `linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${darkerR}, ${darkerG}, ${darkerB}))`;
     }
-    return colors[Math.abs(hash) % colors.length];
+    return `linear-gradient(135deg, ${color}, ${color})`;
   };
-
-  // Sample data
-  const players: Player[] = [
-    {
-      username: "Alex",
-      scoreDiff: "+5",
-      linksClicked: 12,
-      isAhead: true,
-    },
-    {
-      username: "Sam",
-      scoreDiff: "-3",
-      linksClicked: 8,
-      isAhead: false,
-    },
-    {
-      username: "Jordan",
-      scoreDiff: "+2",
-      linksClicked: 10,
-      isAhead: true,
-    },
-    {
-      username: "Casey",
-      scoreDiff: "-1",
-      linksClicked: 7,
-      isAhead: false,
-    },
-    {
-      username: "Morgan",
-      scoreDiff: "+4",
-      linksClicked: 11,
-      isAhead: true,
-    },
-  ];
+  
+  // Convert Player[] to ScoreboardPlayer[] and calculate diffs
+  // Sort by clicks for display
+  const sortedPlayers = [...players].sort((a, b) => b.clicks - a.clicks);
+  
+  const scoreboardPlayers: ScoreboardPlayer[] = sortedPlayers.map((player) => {
+    const diff = player.clicks - currentPlayerClicks;
+    const scoreDiff = diff > 0 ? `+${diff}` : diff === 0 ? "0" : `${diff}`;
+    const isAhead = diff > 0 ? true : diff < 0 ? false : null;
+    
+    return {
+      username: player.name,
+      scoreDiff,
+      linksClicked: player.clicks,
+      isAhead,
+      colorIndex: 0, // Not used anymore, kept for interface compatibility
+    };
+  });
 
   return (
     <div className="scoreboard-widget">
@@ -101,7 +106,7 @@ const Scoreboard = () => {
       </div>
 
       <div className="players-list">
-        {players.map((player, index) => (
+        {scoreboardPlayers.map((player, index) => (
           <div key={index} className="player-row">
             <div
               className="player-avatar"

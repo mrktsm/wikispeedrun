@@ -44,10 +44,12 @@ const Game = () => {
   const [finishedPlayers, setFinishedPlayers] = useState<MultiplayerFinishData[]>([]);
   const [raceStartTime] = useState(() => Date.now());
   const [currentArticle, setCurrentArticle] = useState("");
+  const [localClicks, setLocalClicks] = useState(0);
   
   // Use ref for cursor data to avoid React re-renders on every cursor update
   const cursorDataRef = useRef<Map<string, CursorUpdate>>(new Map());
   const cursorContainerRef = useRef<HTMLDivElement>(null);
+  const playersRef = useRef<Player[]>([]); // Store players for use in callbacks
   
   const speedrunWidgetRef = useRef<SpeedrunWidgetRef>(null);
   const hasFinishedRef = useRef(false);
@@ -105,6 +107,30 @@ const Game = () => {
     setTimeout(cacheIcons, 100);
   }, []);
 
+  // Cursor colors matching Scoreboard - drastically different colors
+  const CURSOR_COLORS = [
+    "rgba(255, 71, 87, 1)",   // Red/Pink
+    "rgba(52, 152, 219, 1)",  // Blue
+    "rgba(46, 204, 113, 1)",  // Green
+    "rgba(241, 196, 15, 1)",  // Yellow
+    "rgba(155, 89, 182, 1)",  // Purple
+    "rgba(230, 126, 34, 1)",  // Orange
+    "rgba(26, 188, 156, 1)",  // Turquoise
+    "rgba(231, 76, 60, 1)",   // Red
+  ];
+
+  // Hash function to get consistent color index from player name
+  // Same function used in Scoreboard.tsx - ensures matching colors
+  const hashStringToIndex = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash) % CURSOR_COLORS.length;
+  };
+  
   // Handle cursor updates from other players - direct DOM manipulation (no re-render)
   const handleCursorUpdate = useCallback((data: CursorUpdate) => {
     cursorDataRef.current.set(data.playerId, data);
@@ -121,6 +147,9 @@ const Game = () => {
       cursorEl.className = 'other-player-cursor';
       cursorEl.setAttribute('data-player-id', data.playerId);
       
+      // Get color based on player name hash (consistent across all components)
+      const color = CURSOR_COLORS[hashStringToIndex(data.playerName)];
+      
       // Use default pointer icon initially
       const iconHTML = cachedPointerIconHTML || '';
       cursorEl.innerHTML = `
@@ -129,6 +158,29 @@ const Game = () => {
         </div>
         <span class="cursor-name">${data.playerName}</span>
       `;
+      
+      // Store color on element for later use
+      cursorEl.setAttribute('data-player-color', color);
+      
+      // Apply color to cursor and name
+      const cursorPointer = cursorEl.querySelector('.cursor-pointer') as HTMLElement;
+      const cursorName = cursorEl.querySelector('.cursor-name') as HTMLElement;
+      if (cursorPointer) {
+        cursorPointer.style.color = color;
+        // Apply color to all SVG shape elements (polygon, path, rect, circle, etc.)
+        const svg = cursorPointer.querySelector('svg');
+        if (svg) {
+          const shapes = svg.querySelectorAll('polygon, path, rect, circle, ellipse, line, polyline');
+          shapes.forEach(shape => {
+            (shape as SVGElement).setAttribute('fill', color);
+            (shape as SVGElement).style.fill = color;
+          });
+        }
+      }
+      if (cursorName) {
+        cursorName.style.background = color;
+      }
+      
       container.appendChild(cursorEl);
     }
     
@@ -204,6 +256,21 @@ const Game = () => {
         const cursorPointerDiv = cursorEl.querySelector('.cursor-pointer');
         if (cursorPointerDiv) {
           cursorPointerDiv.innerHTML = iconHTML;
+          
+          // Reapply player color after icon update
+          const storedColor = cursorEl.getAttribute('data-player-color');
+          if (storedColor) {
+            cursorPointerDiv.style.color = storedColor;
+            // Apply color to all SVG shape elements (polygon, path, rect, circle, etc.)
+            const svg = cursorPointerDiv.querySelector('svg');
+            if (svg) {
+              const shapes = svg.querySelectorAll('polygon, path, rect, circle, ellipse, line, polyline');
+              shapes.forEach(shape => {
+                (shape as SVGElement).setAttribute('fill', storedColor);
+                (shape as SVGElement).style.fill = storedColor;
+              });
+            }
+          }
         }
       }
       
@@ -221,6 +288,9 @@ const Game = () => {
     }
   }, []);
 
+  // Track current player ID for syncing clicks
+  const currentPlayerIdRef = useRef<string | null>(null);
+  
   // Initialize multiplayer if needed
   const {
     isConnected,
@@ -234,7 +304,28 @@ const Game = () => {
   } = useMultiplayer({
     onPlayerFinish: handlePlayerFinish,
     onCursorUpdate: handleCursorUpdate,
+    onPlayerUpdate: (data) => {
+      // Sync local clicks with server when our own player is updated
+      if (data.playerId === currentPlayerIdRef.current) {
+        setLocalClicks(data.clicks);
+      }
+    },
   });
+  
+  // Update current player ID when players list changes
+  useEffect(() => {
+    // Update ref for use in callbacks
+    playersRef.current = players;
+    
+    const currentPlayer = players.find(p => p.name === playerName);
+    if (currentPlayer) {
+      currentPlayerIdRef.current = currentPlayer.id;
+      // Sync local clicks with server value if available
+      if (currentPlayer.clicks > localClicks) {
+        setLocalClicks(currentPlayer.clicks);
+      }
+    }
+  }, [players, playerName, localClicks]);
   
   // Connect to multiplayer - use global flag to prevent duplicate connections
   // during page transitions (two Game components mount simultaneously)
@@ -332,6 +423,8 @@ const Game = () => {
     
     // Send navigation to server if multiplayer
     if (isMultiplayer) {
+      // Track clicks locally (will be synced with server response)
+      setLocalClicks(prev => prev + 1);
       sendNavigate(articleName);
     }
   };
@@ -453,15 +546,6 @@ const Game = () => {
     }
   };
 
-  // Get other players' current articles for display (exclude self)
-  const otherPlayersProgress = players
-    .filter(p => !p.finished && p.name !== playerName)
-    .map((p: Player) => ({
-      name: p.name,
-      article: p.currentArticle,
-      clicks: p.clicks,
-    }));
-
   // Get cursors on the same article
 
   return (
@@ -492,21 +576,19 @@ const Game = () => {
       </div>
       <div className={`game-hud ${hudVisible ? "visible" : ""}`}>
         {/* Scoreboard */}
-        {isMultiplayer && <Scoreboard />}
-        {/* Multiplayer progress indicator */}
-        {isMultiplayer && otherPlayersProgress.length > 0 && (
-          <div className="multiplayer-progress">
-            <div className="multiplayer-progress-header">
-              Other Players ({otherPlayersProgress.length})
-            </div>
-            {otherPlayersProgress.slice(0, 4).map((p, i) => (
-              <div key={i} className="multiplayer-player-progress">
-                <span className="mp-player-name">{p.name}</span>
-                <span className="mp-player-article">{p.article}</span>
-                <span className="mp-player-clicks">{p.clicks} clicks</span>
-              </div>
-            ))}
-          </div>
+        {isMultiplayer && (
+          <Scoreboard 
+            players={players.filter(p => {
+              // Filter out current player by ID if available, otherwise by name
+              if (currentPlayerIdRef.current) {
+                return p.id !== currentPlayerIdRef.current && !p.finished;
+              }
+              return p.name !== playerName && !p.finished;
+            })}
+            currentPlayerClicks={players.find(p => 
+              currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
+            )?.clicks || localClicks}
+          />
         )}
         {/* Finished players indicator */}
         {isMultiplayer && finishedPlayers.length > 0 && (

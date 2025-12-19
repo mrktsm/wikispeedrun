@@ -2,6 +2,8 @@
 
 .race-lobby-page {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: #151515;
   color: #bababa;
   font-family: "Noto Sans", "Lucida Grande", "Lucida Sans Unicode", Geneva,
@@ -20,9 +22,9 @@
 }
 
 .race-lobby-nav-container {
-  max-width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 32px;
 }
 
 .race-lobby-nav-content {
@@ -99,9 +101,14 @@
 
 /* Main Content */
 .race-lobby-main {
-  padding: 0 16px 16px 16px;
+  padding: 0 32px 16px 32px;
   max-width: 1440px;
   margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Spacer under nav to mimic main menu's secondary bar height */
@@ -112,9 +119,11 @@
 /* Grid Layout - like main menu */
 .race-lobby-grid {
   display: grid;
-  grid-template-columns: minmax(clamp(200px, 20vw, 280px), 280px) 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(clamp(220px, 23vw, 320px), 320px) 1fr;
+  gap: 16px;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 900px) {

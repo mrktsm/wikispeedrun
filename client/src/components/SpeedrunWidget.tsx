@@ -239,7 +239,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
         <div className="speedrun-header">
           <div className="game-title">
             <div>{endArticle.replace(/_/g, " ")}</div>
-            <div className="category">{gameMode} | Random</div>
+            <div className="category">{gameMode} • Random</div>
           </div>
         </div>
 

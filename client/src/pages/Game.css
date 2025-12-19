@@ -69,54 +69,97 @@
   position: relative;
 }
 
+/* Cursor container */
+.cursor-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
 /* Other players' cursors */
 .other-player-cursor {
   position: absolute;
   left: 0;
   top: 0;
   pointer-events: none;
-  z-index: 1000;
   will-change: transform;
+  /* Smooth interpolation between positions */
+  transition: transform 50ms linear;
 }
 
 .cursor-pointer {
-  color: #ff4757;
+  color: rgba(255, 71, 87, 0.85);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
   animation: cursor-pulse 1.5s ease-in-out infinite;
+  position: relative;
 }
 
 .cursor-pointer svg {
-  width: 22px;
-  height: 22px;
-  transform: rotate(-135deg);
+  width: 17px;
+  height: 17px;
+  position: relative;
 }
 
-.cursor-pointer svg path {
-  fill: currentColor;
-  stroke: rgba(255, 255, 255, 0.3);
+.cursor-pointer svg polygon,
+.cursor-pointer svg path,
+.cursor-pointer svg rect {
+  stroke: rgba(255, 255, 255, 0.2);
   stroke-width: 1.5;
+  paint-order: stroke fill;
+  /* Fill color is set dynamically via JavaScript */
+}
+
+/* Cursor type indicators */
+/* Pointer cursor (for links) */
+.other-player-cursor.cursor-pointer-type .cursor-pointer svg {
+  transform: scale(1);
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.4));
+}
+
+/* Text cursor (for text inputs) */
+.other-player-cursor.cursor-text-type .cursor-pointer svg {
+  transform: scale(1);
+}
+
+/* Hand cursor (for images and links) */
+.other-player-cursor.cursor-hand-type .cursor-pointer svg {
+  transform: scale(1);
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.4));
+}
+.other-player-cursor.cursor-hand-type .cursor-pointer svg polygon,
+.other-player-cursor.cursor-hand-type .cursor-pointer svg path,
+.other-player-cursor.cursor-hand-type .cursor-pointer svg rect {
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 1.5;
+  paint-order: stroke fill;
 }
 
 .cursor-name {
   position: absolute;
-  left: 16px;
+  left: 18px;
   top: 16px;
-  background: rgba(255, 71, 87, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 71, 87, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: #fff;
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 3px;
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
   font-family: "Noto Sans", sans-serif;
   white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.3px;
 }
 
 @keyframes cursor-pulse {
   0%,
   100% {
-    opacity: 1;
+    opacity: 0.85;
   }
   50% {
     opacity: 0.7;
@@ -124,26 +167,7 @@
 }
 
 /* Give each player a different color */
-.other-player-cursor:nth-child(2) .cursor-pointer {
-  color: #3498db;
-}
-.other-player-cursor:nth-child(2) .cursor-name {
-  background: rgba(52, 152, 219, 0.85);
-}
-
-.other-player-cursor:nth-child(3) .cursor-pointer {
-  color: #2ecc71;
-}
-.other-player-cursor:nth-child(3) .cursor-name {
-  background: rgba(46, 204, 113, 0.85);
-}
-
-.other-player-cursor:nth-child(4) .cursor-pointer {
-  color: #f1c40f;
-}
-.other-player-cursor:nth-child(4) .cursor-name {
-  background: rgba(241, 196, 15, 0.85);
-}
+/* Colors are now dynamically assigned via JavaScript based on player name hash */
 
 /* HUD hidden by default, shows when article loads */
 .game-hud {

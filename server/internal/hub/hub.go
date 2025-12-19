@@ -420,9 +420,10 @@ func (h *Hub) removeClientFromRoom(client *Client) {
 }
 
 type CursorPayload struct {
-	X       float64 `json:"x"`
-	Y       float64 `json:"y"`
-	Article string  `json:"article"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	Article    string  `json:"article"`
+	CursorType string  `json:"cursorType,omitempty"`
 }
 
 func (h *Hub) handleCursor(client *Client, payload json.RawMessage) {
@@ -456,6 +457,7 @@ func (h *Hub) handleCursor(client *Client, payload json.RawMessage) {
 			"x":          p.X,
 			"y":          p.Y,
 			"article":    p.Article,
+			"cursorType": p.CursorType,
 		}),
 	}, client)
 }
