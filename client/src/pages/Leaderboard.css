@@ -302,15 +302,35 @@
 
 .leaderboard-table-wrapper {
   overflow-x: auto;
+  position: relative;
+}
+
+.leaderboard-table-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--wikipedia-logo);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 70% auto;
+  opacity: 0.35;
+  filter: brightness(0) invert(0.65);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
+  position: relative;
+  z-index: 1;
 }
 
 .leaderboard-table thead {
-  background: linear-gradient(to bottom, #242424, #151515);
+  background: linear-gradient(to bottom, rgba(36, 36, 36, 0.9), rgba(21, 21, 21, 0.9));
 }
 
 .leaderboard-table th {
@@ -332,11 +352,11 @@
 }
 
 .leaderboard-table tbody tr:nth-child(odd) {
-  background-color: #242424;
+  background-color: rgba(36, 36, 36, 0.85);
 }
 
 .leaderboard-table tbody tr:nth-child(even) {
-  background-color: #151515;
+  background-color: rgba(21, 21, 21, 0.85);
 }
 
 .leaderboard-table tbody tr:hover {

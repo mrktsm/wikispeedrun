@@ -11,6 +11,7 @@ import {
   IoChevronUp,
 } from "react-icons/io5";
 import fightIcon from "../assets/fight-svgrepo-com(1).svg";
+import wikipediaLogo from "../assets/wikipedia-logotype-of-earth-puzzle-svgrepo-com.svg";
 import "./Leaderboard.css";
 
 // Wikipedia API helpers
@@ -471,7 +472,7 @@ const Leaderboard = () => {
 
           {/* Center - Leaderboard Table */}
           <div className="leaderboard-center">
-            <div className="leaderboard-table-wrapper">
+            <div className="leaderboard-table-wrapper" style={{ '--wikipedia-logo': `url(${wikipediaLogo})` } as React.CSSProperties}>
               <table className="leaderboard-table">
                 <thead>
                   <tr>

@@ -218,7 +218,19 @@ const LobbyBrowser = () => {
 
   // Ref for measuring the table wrapper (its height is set by CSS flex)
   const tableWrapperRef = useRef<HTMLDivElement>(null);
-  const [placeholderCount, setPlaceholderCount] = useState<number>(4);
+  
+  // Calculate initial placeholder count based on viewport height immediately
+  // This avoids the delay from DOM measurement
+  const calculateInitialPlaceholders = () => {
+    // Estimate: viewport height minus header (~200px) minus other UI (~300px) = ~400px available
+    // Base row height is ~37px, so roughly 10-15 rows fit
+    const estimatedAvailableHeight = Math.max(400, window.innerHeight - 500);
+    const baseRowHeight = 37;
+    const estimatedRows = Math.floor(estimatedAvailableHeight / baseRowHeight);
+    return Math.max(15, estimatedRows);
+  };
+  
+  const [placeholderCount, setPlaceholderCount] = useState<number>(calculateInitialPlaceholders());
   const [extraRowPadding, setExtraRowPadding] = useState<number>(0);
 
   const computePlaceholderCount = useCallback(() => {
@@ -236,7 +248,8 @@ const LobbyBrowser = () => {
     const availableSpace = wrapperHeight - theadHeight;
 
     if (availableSpace <= 0) {
-      setPlaceholderCount(0);
+      // Keep a reasonable minimum
+      setPlaceholderCount(calculateInitialPlaceholders());
       setExtraRowPadding(0);
       return;
     }
@@ -262,14 +275,23 @@ const LobbyBrowser = () => {
   }, [filteredLobbies.length]);
 
   useEffect(() => {
-    // Wait for layout to settle, then calculate
-    const timeoutId = setTimeout(() => {
+    // Use ResizeObserver for immediate updates when container size changes
+    const wrapper = tableWrapperRef.current;
+    if (!wrapper) return;
+
+    // Calculate immediately
+    computePlaceholderCount();
+
+    // Use ResizeObserver for instant updates
+    const resizeObserver = new ResizeObserver(() => {
       computePlaceholderCount();
-    }, 50);
+    });
+
+    resizeObserver.observe(wrapper);
 
     window.addEventListener("resize", computePlaceholderCount);
     return () => {
-      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
       window.removeEventListener("resize", computePlaceholderCount);
     };
   }, [computePlaceholderCount]);
