@@ -2,6 +2,8 @@
 
 .lobby-browser-page {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: #151515;
   color: #bababa;
   font-family: "Noto Sans", "Lucida Grande", "Lucida Sans Unicode", Geneva,
@@ -10,9 +12,14 @@
 
 /* Main Content */
 .lobby-browser-main {
-  padding: 0 16px 16px 16px;
+  padding: 0 32px 16px 32px;
   max-width: 1440px;
   margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Spacer under nav */
@@ -23,9 +30,11 @@
 /* Grid Layout */
 .lobby-browser-grid {
   display: grid;
-  grid-template-columns: minmax(clamp(200px, 20vw, 280px), 280px) 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(clamp(220px, 23vw, 320px), 320px) 1fr;
+  gap: 16px;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 900px) {
@@ -228,23 +237,29 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
 }
 
 /* Lobbies Card */
 .lobbies-card {
   background: #1a1a1a;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .lobbies-table-wrapper {
   overflow: visible;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .lobbies-table {
   width: 100%;
   border-collapse: collapse;
-  display: table;
+  flex: 1;
 }
 
 .lobbies-table thead {
@@ -252,12 +267,13 @@
 }
 
 .lobbies-table th {
-  padding: 10px 16px;
+  padding: calc(0px + var(--extra-row-padding, 0px)) 16px;
   text-align: left;
   font-size: 12px;
   font-weight: 500;
   color: #aaa;
   text-transform: capitalize;
+  line-height: 17px;
 }
 
 .lobbies-table th.text-right {
@@ -278,7 +294,9 @@
   background-color: #1a1a1a;
 }
 
-.lobbies-table tbody tr:hover:not(.unavailable):not(.empty-row):not(.empty-placeholder-row) {
+.lobbies-table
+  tbody
+  tr:hover:not(.unavailable):not(.empty-row):not(.empty-placeholder-row) {
   background: linear-gradient(to bottom, #1a3a5c, #152a42) !important;
 }
 
@@ -321,13 +339,12 @@
   background: inherit !important;
 }
 
-
-
 .lobbies-table td {
-  padding: 10px 16px;
+  padding: calc(0px + var(--extra-row-padding, 0px)) 16px;
   font-size: 14px;
   color: #fff;
   white-space: nowrap;
+  line-height: 17px;
 }
 
 .lobbies-table td.text-right {
@@ -480,4 +497,3 @@
     grid-template-columns: 1fr;
   }
 }
-

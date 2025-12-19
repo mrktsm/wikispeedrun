@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoRefresh, IoSearch, IoAdd } from "react-icons/io5";
 import { FaBolt, FaCog, FaSignInAlt } from "react-icons/fa";
@@ -216,6 +216,64 @@ const LobbyBrowser = () => {
     return lobby.mode.toLowerCase().includes(modeFilter.toLowerCase());
   });
 
+  // Ref for measuring the table wrapper (its height is set by CSS flex)
+  const tableWrapperRef = useRef<HTMLDivElement>(null);
+  const [placeholderCount, setPlaceholderCount] = useState<number>(4);
+  const [extraRowPadding, setExtraRowPadding] = useState<number>(0);
+
+  const computePlaceholderCount = useCallback(() => {
+    const wrapper = tableWrapperRef.current;
+    if (!wrapper) return;
+
+    const thead = wrapper.querySelector("thead");
+    if (!thead) return;
+
+    // Measure the wrapper height (determined by CSS flex, not content)
+    const wrapperHeight = wrapper.clientHeight;
+    const theadHeight = thead.getBoundingClientRect().height;
+
+    // Available space for rows
+    const availableSpace = wrapperHeight - theadHeight;
+
+    if (availableSpace <= 0) {
+      setPlaceholderCount(0);
+      setExtraRowPadding(0);
+      return;
+    }
+
+    // Base row height: 10px padding top + 10px bottom + ~17px content
+    const baseRowHeight = 37;
+
+    // Calculate how many full rows can fit
+    const maxRowsThatFit = Math.floor(availableSpace / baseRowHeight);
+
+    const realRowCount = filteredLobbies.length;
+    const neededPlaceholders = Math.max(0, maxRowsThatFit - realRowCount);
+    const totalRows = realRowCount + neededPlaceholders;
+
+    // Calculate leftover space and distribute as extra padding per row
+    const usedHeight = totalRows * baseRowHeight;
+    const leftover = availableSpace - usedHeight;
+    const extraPadding =
+      totalRows > 0 ? Math.max(0, leftover / totalRows / 2) : 0;
+
+    setPlaceholderCount(neededPlaceholders);
+    setExtraRowPadding(extraPadding);
+  }, [filteredLobbies.length]);
+
+  useEffect(() => {
+    // Wait for layout to settle, then calculate
+    const timeoutId = setTimeout(() => {
+      computePlaceholderCount();
+    }, 50);
+
+    window.addEventListener("resize", computePlaceholderCount);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", computePlaceholderCount);
+    };
+  }, [computePlaceholderCount]);
+
   const getStatusText = (status: Lobby["status"]) => {
     switch (status) {
       case "waiting":
@@ -357,7 +415,15 @@ const LobbyBrowser = () => {
           <div className="lobby-browser-right">
             {/* Lobby Table */}
             <div className="lobby-browser-card lobbies-card">
-              <div className="lobbies-table-wrapper">
+              <div
+                className="lobbies-table-wrapper"
+                ref={tableWrapperRef}
+                style={
+                  {
+                    "--extra-row-padding": `${extraRowPadding}px`,
+                  } as React.CSSProperties
+                }
+              >
                 <table className="lobbies-table">
                   <thead>
                     <tr>
@@ -432,25 +498,63 @@ const LobbyBrowser = () => {
                       </tr>
                     )}
                     {/* Empty placeholder rows to fill space */}
-                    {Array.from({ length: 4 }).map((_, index) => {
-                      // Calculate if this row should be odd or even based on filtered lobbies length
-                      const rowIndex = filteredLobbies.length + index;
-                      const isOdd = rowIndex % 2 === 0;
-                      return (
-                        <tr key={`empty-${index}`} className={`empty-placeholder-row ${isOdd ? 'odd' : 'even'}`}>
-                          <td>
-                            <div className="lobby-host">
-                              <div className="lobby-flag" style={{ visibility: 'hidden' }} />
-                              <span className="lobby-hostname" style={{ visibility: 'hidden' }}>—</span>
-                            </div>
-                          </td>
-                          <td><span className="lobby-route" style={{ visibility: 'hidden' }}>—</span></td>
-                          <td><span className="lobby-mode" style={{ visibility: 'hidden' }}>—</span></td>
-                          <td className="text-right"><span className="lobby-players" style={{ visibility: 'hidden' }}>—</span></td>
-                          <td className="text-right"><span style={{ visibility: 'hidden' }}>—</span></td>
-                        </tr>
-                      );
-                    })}
+                    {Array.from({ length: placeholderCount }).map(
+                      (_, index) => {
+                        // Calculate if this row should be odd or even based on filtered lobbies length
+                        const rowIndex = filteredLobbies.length + index;
+                        const isOdd = rowIndex % 2 === 0;
+                        return (
+                          <tr
+                            key={`empty-${index}`}
+                            className={`empty-placeholder-row ${
+                              isOdd ? "odd" : "even"
+                            }`}
+                          >
+                            <td>
+                              <div className="lobby-host">
+                                <div
+                                  className="lobby-flag"
+                                  style={{ visibility: "hidden" }}
+                                />
+                                <span
+                                  className="lobby-hostname"
+                                  style={{ visibility: "hidden" }}
+                                >
+                                  —
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                className="lobby-route"
+                                style={{ visibility: "hidden" }}
+                              >
+                                —
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className="lobby-mode"
+                                style={{ visibility: "hidden" }}
+                              >
+                                —
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              <span
+                                className="lobby-players"
+                                style={{ visibility: "hidden" }}
+                              >
+                                —
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              <span style={{ visibility: "hidden" }}>—</span>
+                            </td>
+                          </tr>
+                        );
+                      }
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -481,4 +585,3 @@ const LobbyBrowser = () => {
 };
 
 export default LobbyBrowser;
-
