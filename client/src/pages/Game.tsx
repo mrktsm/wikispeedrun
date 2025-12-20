@@ -9,6 +9,7 @@ import type {
 import WikipediaViewer from "../components/WikipediaViewer";
 import VictoryModal from "../components/VictoryModal";
 import Scoreboard from "../components/Scoreboard";
+import SamePageNotification from "../components/SamePageNotification";
 import { useMultiplayer, type Player, type CursorUpdate } from "../hooks/useMultiplayer";
 import "../App.css";
 import "./Game.css";
@@ -45,6 +46,17 @@ const Game = () => {
   const [raceStartTime] = useState(() => Date.now());
   const [currentArticle, setCurrentArticle] = useState("");
   const [localClicks, setLocalClicks] = useState(0);
+  const [showSamePageNotification, setShowSamePageNotification] = useState(false);
+  
+  // Auto-hide notification after 3 seconds
+  useEffect(() => {
+    if (showSamePageNotification) {
+      const timer = setTimeout(() => {
+        setShowSamePageNotification(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSamePageNotification]);
   
   // Use ref for cursor data to avoid React re-renders on every cursor update
   const cursorDataRef = useRef<Map<string, CursorUpdate>>(new Map());
@@ -622,6 +634,19 @@ const Game = () => {
           onNewRoute={handleNewRoute}
         />
       )}
+      {/* Same page notification */}
+      <SamePageNotification
+        playerName="TestPlayer"
+        playerColor="rgba(52, 152, 219, 1)"
+        visible={showSamePageNotification}
+      />
+      {/* Test button to toggle notification */}
+      <button
+        className="same-page-test-button"
+        onClick={() => setShowSamePageNotification(true)}
+      >
+        Show Notification
+      </button>
     </div>
   );
 };

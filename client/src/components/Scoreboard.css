@@ -129,7 +129,8 @@
   margin-right: 8px;
   flex-shrink: 0;
   font-family: "Calibri", sans-serif;
-  border: 1px solid #fff;
+  border: 1px solid;
+  text-shadow: none;
 }
 
 .player-name {

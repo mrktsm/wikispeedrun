@@ -276,3 +276,25 @@
   color: #8a8a8a;
   font-size: 12px;
 }
+
+/* Test button for same page notification */
+.same-page-test-button {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background-color: #151515;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-family: "Calibri", sans-serif;
+  font-size: 14px;
+  color: #fff;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.2s;
+}
+
+.same-page-test-button:hover {
+  background-color: #242424;
+}
