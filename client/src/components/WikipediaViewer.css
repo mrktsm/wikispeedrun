@@ -63,9 +63,21 @@
 }
 
 .wikipedia-viewer {
-  max-width: 1200px;
-  margin: 0 auto 0 360px; /* Add left margin for speedrun widget */
-  padding: 6px 20px;
+  max-width: 1000px;
+  /* On smaller screens: space between widget and article equals space on right */
+  /* margin-left = widget (360px) + gap, where gap = (viewport - 360 - 1000) / 2 */
+  margin-left: max(360px, calc(50vw - 320px));
+  margin-right: auto;
+  padding: 6px 10px;
+}
+
+/* On larger screens, center the article perfectly in the middle */
+/* When viewport >= 1720px, use true centering: (viewport - 1000) / 2 */
+@media (min-width: 1720px) {
+  .wikipedia-viewer {
+    margin-left: calc(50vw - 500px);
+    margin-right: auto;
+  }
 }
 
 .wiki-controls {
@@ -109,7 +121,7 @@
 
 .wiki-article {
   background: var(--wiki-background-base);
-  padding: 10px 30px;
+  padding: 10px 15px;
   border-radius: 8px;
   overflow: visible; /* Don't clip floated content */
 }

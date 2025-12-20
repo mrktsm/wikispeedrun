@@ -196,14 +196,31 @@ const Game = () => {
       container.appendChild(cursorEl);
     }
     
-    // Update position
-    cursorEl.style.transform = `translate(calc(${data.x}vw - 2px), calc(${data.y}vh - 2px))`;
+    // Update cursor container to match article position
+    const articleContainer = document.querySelector('.wikipedia-viewer');
+    if (!articleContainer) return;
+    const articleRect = articleContainer.getBoundingClientRect();
+    
+    // Get parent container position for relative positioning
+    const parentContainer = container.parentElement;
+    if (!parentContainer) return;
+    const parentRect = parentContainer.getBoundingClientRect();
+    
+    // Position cursor container relative to parent (for position: absolute)
+    container.style.left = `${articleRect.left - parentRect.left}px`;
+    container.style.top = `${articleRect.top - parentRect.top}px`;
+    container.style.width = `${articleRect.width}px`;
+    container.style.height = `${articleContainer.scrollHeight}px`;
+    
+    // Position cursor using article-relative coordinates directly
+    // This means cursors scroll with the article content
+    cursorEl.style.transform = `translate(${data.x}px, ${data.y}px)`;
     cursorEl.setAttribute('data-article', data.article);
     
-    // Detect cursor type locally and update icon
-    const xPx = (data.x / 100) * window.innerWidth;
-    const yPx = (data.y / 100) * window.innerHeight;
-    const element = document.elementFromPoint(xPx, yPx);
+    // Detect cursor type from element at screen position
+    const screenX = articleRect.left + data.x;
+    const screenY = articleRect.top + data.y;
+    const element = document.elementFromPoint(screenX, screenY);
     
     let cursorType = 'pointer'; // Default to pointer
     if (element) {
@@ -442,29 +459,44 @@ const Game = () => {
   };
 
   // Track mouse movement for cursor sharing (adaptive throttling)
+  // Use article-relative coordinates so cursor position is accurate regardless of screen size
   const lastPositionRef = useRef({ x: 0, y: 0 });
+  const lastMouseClientRef = useRef({ clientX: 0, clientY: 0 }); // Store last mouse screen position for scroll updates
   
   useEffect(() => {
     if (!isMultiplayer || !isConnected) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const now = Date.now();
-      const x = (e.clientX / window.innerWidth) * 100;
-      const y = (e.clientY / window.innerHeight) * 100;
       
-      // Calculate movement distance since last send
+      // Store last mouse screen position for scroll updates
+      lastMouseClientRef.current = { clientX: e.clientX, clientY: e.clientY };
+      
+      // Find the article container to calculate relative position
+      const articleContainer = document.querySelector('.wikipedia-viewer');
+      if (!articleContainer) return;
+      
+      const rect = articleContainer.getBoundingClientRect();
+      
+      // Calculate position relative to article container
+      // x: pixels from article left edge
+      // y: position within the article content (rect.top already accounts for scroll)
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Calculate movement distance since last send (in pixels)
       const dx = x - lastPositionRef.current.x;
       const dy = y - lastPositionRef.current.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
       // Adaptive throttling: faster updates when moving more
-      // Fast movement (distance > 2%): 16ms (~60fps)
-      // Medium movement (distance > 0.5%): 25ms (~40fps)
+      // Fast movement (distance > 20px): 16ms (~60fps)
+      // Medium movement (distance > 5px): 25ms (~40fps)
       // Slow movement: 50ms (~20fps)
       let minInterval = 50;
-      if (distance > 2) {
+      if (distance > 20) {
         minInterval = 16;
-      } else if (distance > 0.5) {
+      } else if (distance > 5) {
         minInterval = 25;
       }
       
@@ -512,26 +544,96 @@ const Game = () => {
 
       sendCursor(x, y, currentArticle || startArticle, cursorType);
     };
+    
+    // Use RAF to continuously monitor position changes (more reliable than scroll events)
+    // This catches scroll, resize, and any other position changes
+    let rafId: number;
+    let lastRectTop = 0;
+    
+    const checkPositionChange = () => {
+      const { clientX, clientY } = lastMouseClientRef.current;
+      
+      // Only check if we have a mouse position
+      if (clientX !== 0 || clientY !== 0) {
+        const articleContainer = document.querySelector('.wikipedia-viewer');
+        if (articleContainer) {
+          const rect = articleContainer.getBoundingClientRect();
+          
+          // Check if article position changed (indicates scroll)
+          if (Math.abs(rect.top - lastRectTop) > 1) {
+            lastRectTop = rect.top;
+            
+            const now = Date.now();
+            // Throttle to 30fps max for scroll updates
+            if (now - lastCursorSendRef.current >= 33) {
+              const x = clientX - rect.left;
+              const y = clientY - rect.top;
+              
+              // Only send if position actually changed significantly
+              const dx = Math.abs(x - lastPositionRef.current.x);
+              const dy = Math.abs(y - lastPositionRef.current.y);
+              
+              if (dx > 1 || dy > 1) {
+                lastCursorSendRef.current = now;
+                lastPositionRef.current = { x, y };
+                sendCursor(x, y, currentArticle || startArticle);
+              }
+            }
+          }
+        }
+      }
+      
+      rafId = requestAnimationFrame(checkPositionChange);
+    };
+    
+    rafId = requestAnimationFrame(checkPositionChange);
 
     document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(rafId);
+    };
   }, [isMultiplayer, isConnected, currentArticle, startArticle, sendCursor]);
 
-  // Clear cursors that are too old (5 seconds)
+  // Update cursor container position on scroll/resize
+  // Cursors are positioned relative to the container, so they scroll with the article
   useEffect(() => {
     if (!isMultiplayer) return;
 
-    const interval = setInterval(() => {
-      setOtherCursors(prev => {
-        const now = Date.now();
-        const next = new Map(prev);
-        // Remove cursors from players on different articles
-        return next;
-      });
-    }, 1000);
+    const updateContainerPosition = () => {
+      const container = cursorContainerRef.current;
+      if (!container) return;
+      
+      const articleContainer = document.querySelector('.wikipedia-viewer');
+      if (!articleContainer) return;
+      const articleRect = articleContainer.getBoundingClientRect();
+      
+      // Get parent container position for relative positioning
+      const parentContainer = container.parentElement;
+      if (!parentContainer) return;
+      const parentRect = parentContainer.getBoundingClientRect();
+      
+      // Position cursor container relative to parent (for position: absolute)
+      container.style.left = `${articleRect.left - parentRect.left}px`;
+      container.style.top = `${articleRect.top - parentRect.top}px`;
+      container.style.width = `${articleRect.width}px`;
+      container.style.height = `${articleContainer.scrollHeight}px`;
+    };
 
-    return () => clearInterval(interval);
+    // Update on scroll and resize
+    window.addEventListener('scroll', updateContainerPosition, { passive: true });
+    window.addEventListener('resize', updateContainerPosition, { passive: true });
+    
+    // Initial update
+    updateContainerPosition();
+    
+    return () => {
+      window.removeEventListener('scroll', updateContainerPosition);
+      window.removeEventListener('resize', updateContainerPosition);
+    };
   }, [isMultiplayer]);
+
+  // Note: Cursor cleanup is handled by the server disconnecting players
 
   const handlePlayAgain = () => {
     // Restart with same route
