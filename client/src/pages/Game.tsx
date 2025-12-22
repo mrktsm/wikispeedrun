@@ -62,6 +62,7 @@ const Game = () => {
   const cursorDataRef = useRef<Map<string, CursorUpdate>>(new Map());
   const cursorContainerRef = useRef<HTMLDivElement>(null);
   const playersRef = useRef<Player[]>([]); // Store players for use in callbacks
+  const highlightedElementsRef = useRef<Map<string, HTMLElement>>(new Map()); // Track highlighted elements by player ID
   
   const speedrunWidgetRef = useRef<SpeedrunWidgetRef>(null);
   const hasFinishedRef = useRef(false);
@@ -196,6 +197,17 @@ const Game = () => {
   };
   
   // Resolve interpolated position from section anchors
+  // Helper to get element top relative to container safely
+  const getRelativeTop = (element: HTMLElement, container: Element): number => {
+    let current: HTMLElement | null = element;
+    let top = 0;
+    while (current && current !== container) {
+      top += current.offsetTop;
+      current = current.offsetParent as HTMLElement;
+    }
+    return top;
+  };
+
   const resolveSectionPosition = (
     anchorId: string | null, 
     nextAnchorId: string | null, 
@@ -203,19 +215,20 @@ const Game = () => {
     fallbackQy: number, 
     articleContainer: Element
   ): number => {
-    // Helper to get heading top relative to article
-    const getHeadingTop = (id: string, articleRect: DOMRect): number | null => {
+    // Helper to get heading top relative to article using layout offset
+    // This is much more stable than getBoundingClientRect regarding scroll/sticky headers
+    const getHeadingTop = (id: string, container: Element): number | null => {
         const anchor = document.getElementById(id);
         if (!anchor) return null;
         const heading = anchor.closest('h2, h3, h4') || anchor;
-        return heading.getBoundingClientRect().top - articleRect.top;
+        return getRelativeTop(heading as HTMLElement, container);
     };
     
-    const articleRect = articleContainer.getBoundingClientRect();
+    // Use offsetHeight for stable layout height
     const articleBottom = (articleContainer as HTMLElement).offsetHeight;
     
-    const startTop = anchorId ? getHeadingTop(anchorId, articleRect) : 0;
-    const endTop = nextAnchorId ? getHeadingTop(nextAnchorId, articleRect) : articleBottom;
+    const startTop = anchorId ? getHeadingTop(anchorId, articleContainer) : 0;
+    const endTop = nextAnchorId ? getHeadingTop(nextAnchorId, articleContainer) : articleBottom;
     
     // If we resolved the boundaries successfully, interpolate!
     if (startTop !== null && endTop !== null) {
@@ -302,26 +315,51 @@ const Game = () => {
     // Position cursor at screen position (using fixed positioning)
     // cursorEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
     
+    // Highlight links hovered by other players
+    const articleWidth = (articleContainer as HTMLElement).offsetWidth;
+    const rx = data.x * articleWidth;
+    const ry = resolveSectionPosition(
+      data.anchorId || null, 
+      data.nextAnchorId || null, 
+      data.sectionRatio || 0, 
+      data.y, 
+      articleContainer
+    );
+    
+    const screenX = articleRect.left + rx;
+    const screenY = articleRect.top + ry;
+    
+    // Check for element at position
+    const element = document.elementFromPoint(screenX, screenY);
+    let targetLink: HTMLElement | null = null;
+    
+    if (element) {
+      if (element.tagName === 'A') {
+        targetLink = element as HTMLElement;
+      } else {
+        targetLink = element.closest('a') as HTMLElement;
+      }
+    }
+    
+    const prevHighlight = highlightedElementsRef.current.get(data.playerId);
+    // Remove previous highlight if it's different or if we're not over a link anymore
+    if (prevHighlight && prevHighlight !== targetLink) {
+      prevHighlight.classList.remove('remote-hover');
+      highlightedElementsRef.current.delete(data.playerId);
+    }
+    
+    // Apply new highlight
+    if (targetLink && targetLink !== prevHighlight) {
+      targetLink.classList.add('remote-hover');
+      highlightedElementsRef.current.set(data.playerId, targetLink);
+    }
+
     // Use cursorType from server if available (most accurate as it's from sender's side)
     // Fallback to local hit-testing only if server didn't provide it
     let cursorType = data.cursorType || 'pointer';
     
     if (!data.cursorType) {
-      // Calculate screen position from percentages for local fallback hit-testing
-      const articleWidth = (articleContainer as HTMLElement).offsetWidth;
-      const rx = data.x * articleWidth;
-      const ry = resolveSectionPosition(
-        data.anchorId || null, 
-        data.nextAnchorId || null, 
-        data.sectionRatio || 0, 
-        data.y, 
-        articleContainer
-      );
-      
-      const screenX = articleRect.left + rx;
-      const screenY = articleRect.top + ry;
-      const element = document.elementFromPoint(screenX, screenY);
-      
+      // Reuse calculated position for fallback hit-testing
       if (element) {
         const target = element as HTMLElement;
         const computedStyle = window.getComputedStyle(target);
