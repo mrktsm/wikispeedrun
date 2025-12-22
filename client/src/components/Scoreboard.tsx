@@ -54,43 +54,6 @@ const Scoreboard = ({ players, currentPlayerClicks }: ScoreboardProps) => {
     return color;
   };
 
-  // Get lighter color for border (mix with white)
-  const getPlayerBorderColor = (name: string): string => {
-    const index = hashStringToIndex(name);
-    const color = CURSOR_COLORS[index];
-    // Extract RGB values and create a lighter shade for border
-    const rgbMatch = color.match(/\d+/g);
-    if (rgbMatch && rgbMatch.length >= 3) {
-      const r = parseInt(rgbMatch[0]);
-      const g = parseInt(rgbMatch[1]);
-      const b = parseInt(rgbMatch[2]);
-      // Mix with white (70% original, 30% white) to lighten
-      const lighterR = Math.min(255, Math.floor(r * 0.7 + 255 * 0.3));
-      const lighterG = Math.min(255, Math.floor(g * 0.7 + 255 * 0.3));
-      const lighterB = Math.min(255, Math.floor(b * 0.7 + 255 * 0.3));
-      return `rgb(${lighterR}, ${lighterG}, ${lighterB})`;
-    }
-    return getPlayerColor(name);
-  };
-
-  // Generate gradient from color (for avatar)
-  const getPlayerGradient = (name: string): string => {
-    const index = hashStringToIndex(name);
-    const color = CURSOR_COLORS[index];
-    // Extract RGB values and create a darker shade for gradient
-    const rgbMatch = color.match(/\d+/g);
-    if (rgbMatch && rgbMatch.length >= 3) {
-      const r = parseInt(rgbMatch[0]);
-      const g = parseInt(rgbMatch[1]);
-      const b = parseInt(rgbMatch[2]);
-      // Create darker shade (reduce by 30%)
-      const darkerR = Math.max(0, Math.floor(r * 0.7));
-      const darkerG = Math.max(0, Math.floor(g * 0.7));
-      const darkerB = Math.max(0, Math.floor(b * 0.7));
-      return `linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${darkerR}, ${darkerG}, ${darkerB}))`;
-    }
-    return `linear-gradient(135deg, ${color}, ${color})`;
-  };
   
   // Convert Player[] to ScoreboardPlayer[] and calculate diffs
   // Sort by clicks for display
@@ -127,15 +90,6 @@ const Scoreboard = ({ players, currentPlayerClicks }: ScoreboardProps) => {
       <div className="players-list">
         {scoreboardPlayers.map((player, index) => (
           <div key={index} className="player-row">
-            <div
-              className="player-avatar"
-              style={{ 
-                backgroundImage: getPlayerGradient(player.username),
-                borderColor: '#fff'
-              }}
-            >
-              {player.username.charAt(0).toUpperCase()}
-            </div>
             <div 
               className="player-name"
               style={{ color: getPlayerColor(player.username) }}

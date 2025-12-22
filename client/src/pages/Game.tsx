@@ -73,7 +73,7 @@ const Game = () => {
   const gameMode = searchParams.get("mode") || "solo";
   const lobbyCode = searchParams.get("lobby") || "";
   const playerName = searchParams.get("player") || "";
-  const isMultiplayer = gameMode === "race" && lobbyCode;
+  const isMultiplayer = !!(gameMode === "race" && lobbyCode);
 
   // Handle other player finishing
   const handlePlayerFinish = useCallback((data: MultiplayerFinishData) => {
@@ -143,6 +143,91 @@ const Game = () => {
     return Math.abs(hash) % CURSOR_COLORS.length;
   };
   
+  // Find surrounding anchors (heading above and heading below) for section interpolation
+  // This solves the "vertical stretching" issue where sections have different heights on different screens
+  const findSurroundingAnchors = (cursorY: number, articleRect: DOMRect): { 
+    anchorId: string | null; 
+    nextAnchorId: string | null; 
+    sectionRatio: number;
+  } => {
+    // Get all headings and sort them by top position
+    const headings = Array.from(document.querySelectorAll('.wiki-content h2, .wiki-content h3, .wiki-content h4'))
+      .map(heading => {
+        const headlineSpan = heading.querySelector('.mw-headline');
+        const anchorId = headlineSpan?.id || (heading as HTMLElement).id;
+        const top = heading.getBoundingClientRect().top - articleRect.top;
+        return { anchorId, top };
+      })
+      .filter(h => h.anchorId) // Filter out headings without IDs
+      .sort((a, b) => a.top - b.top);
+      
+    // Find the interval containing the cursor
+    // [prev] ... cursor ... [next]
+    let prevIndex = -1;
+    
+    for (let i = 0; i < headings.length; i++) {
+        if (headings[i].top <= cursorY) {
+            prevIndex = i;
+        } else {
+            break; // Found the first heading below cursor
+        }
+    }
+    
+    // Calculate boundaries of the current section
+    const prev = prevIndex >= 0 ? headings[prevIndex] : null;
+    const next = prevIndex + 1 < headings.length ? headings[prevIndex + 1] : null;
+    
+    const articleContainer = document.querySelector('.wikipedia-viewer');
+    const articleBottom = articleContainer ? (articleContainer as HTMLElement).offsetHeight : articleRect.height;
+    
+    // Define the Y range of this section
+    const sectionTop = prev ? prev.top : 0; // Top of article if no prev anchor
+    const sectionBottom = next ? next.top : articleBottom; // Bottom of article if no next anchor
+    const sectionHeight = sectionBottom - sectionTop;
+    
+    // Avoid division by zero
+    const sectionRatio = sectionHeight > 0 ? (cursorY - sectionTop) / sectionHeight : 0;
+    
+    return {
+        anchorId: prev?.anchorId || null,
+        nextAnchorId: next?.anchorId || null,
+        sectionRatio: Math.max(0, Math.min(1, sectionRatio)) // Clamp 0-1
+    };
+  };
+  
+  // Resolve interpolated position from section anchors
+  const resolveSectionPosition = (
+    anchorId: string | null, 
+    nextAnchorId: string | null, 
+    sectionRatio: number, 
+    fallbackQy: number, 
+    articleContainer: Element
+  ): number => {
+    // Helper to get heading top relative to article
+    const getHeadingTop = (id: string, articleRect: DOMRect): number | null => {
+        const anchor = document.getElementById(id);
+        if (!anchor) return null;
+        const heading = anchor.closest('h2, h3, h4') || anchor;
+        return heading.getBoundingClientRect().top - articleRect.top;
+    };
+    
+    const articleRect = articleContainer.getBoundingClientRect();
+    const articleBottom = (articleContainer as HTMLElement).offsetHeight;
+    
+    const startTop = anchorId ? getHeadingTop(anchorId, articleRect) : 0;
+    const endTop = nextAnchorId ? getHeadingTop(nextAnchorId, articleRect) : articleBottom;
+    
+    // If we resolved the boundaries successfully, interpolate!
+    if (startTop !== null && endTop !== null) {
+        return startTop + (endTop - startTop) * sectionRatio;
+    }
+    
+    // Fallback: use percentage-based position
+    return fallbackQy * articleBottom;
+  };
+  
+
+  
   // Handle cursor updates from other players - direct DOM manipulation (no re-render)
   const handleCursorUpdate = useCallback((data: CursorUpdate) => {
     cursorDataRef.current.set(data.playerId, data);
@@ -196,73 +281,73 @@ const Game = () => {
       container.appendChild(cursorEl);
     }
     
-    // Update cursor container to match article position
+    // Store article-relative coordinates on the element for RAF updates
+    cursorEl.setAttribute('data-x', String(data.x));
+    cursorEl.setAttribute('data-y', String(data.y));
+    cursorEl.setAttribute('data-article', data.article);
+    cursorEl.setAttribute('data-anchor-id', data.anchorId || '');
+    cursorEl.setAttribute('data-next-anchor-id', data.nextAnchorId || '');
+    cursorEl.setAttribute('data-section-ratio', String(data.sectionRatio || 0));
+    
+    // Calculate screen position from article-relative coordinates
     const articleContainer = document.querySelector('.wikipedia-viewer');
     if (!articleContainer) return;
     const articleRect = articleContainer.getBoundingClientRect();
     
-    // Get parent container position for relative positioning
-    const parentContainer = container.parentElement;
-    if (!parentContainer) return;
-    const parentRect = parentContainer.getBoundingClientRect();
+    // Convert article-relative to screen position
+    // (Actual rendering is handled by the RAF loop in updateAllCursorPositions)
+    // const screenX = articleRect.left + data.x;
+    // const screenY = articleRect.top + data.y;
     
-    // Position cursor container relative to parent (for position: absolute)
-    container.style.left = `${articleRect.left - parentRect.left}px`;
-    container.style.top = `${articleRect.top - parentRect.top}px`;
-    container.style.width = `${articleRect.width}px`;
-    container.style.height = `${articleContainer.scrollHeight}px`;
+    // Position cursor at screen position (using fixed positioning)
+    // cursorEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
     
-    // Position cursor using article-relative coordinates directly
-    // This means cursors scroll with the article content
-    cursorEl.style.transform = `translate(${data.x}px, ${data.y}px)`;
-    cursorEl.setAttribute('data-article', data.article);
+    // Use cursorType from server if available (most accurate as it's from sender's side)
+    // Fallback to local hit-testing only if server didn't provide it
+    let cursorType = data.cursorType || 'pointer';
     
-    // Detect cursor type from element at screen position
-    const screenX = articleRect.left + data.x;
-    const screenY = articleRect.top + data.y;
-    const element = document.elementFromPoint(screenX, screenY);
-    
-    let cursorType = 'pointer'; // Default to pointer
-    if (element) {
-      const target = element as HTMLElement;
-      const computedStyle = window.getComputedStyle(target);
-      const cursor = computedStyle.cursor;
+    if (!data.cursorType) {
+      // Calculate screen position from percentages for local fallback hit-testing
+      const articleWidth = (articleContainer as HTMLElement).offsetWidth;
+      const rx = data.x * articleWidth;
+      const ry = resolveSectionPosition(
+        data.anchorId || null, 
+        data.nextAnchorId || null, 
+        data.sectionRatio || 0, 
+        data.y, 
+        articleContainer
+      );
       
-      // Links should show hand
-      if (target.tagName === 'A' || target.closest('a')) {
-        cursorType = 'hand';
-      } 
-      // Images should show hand
-      else if (target.tagName === 'IMG' || target.closest('img')) {
-        cursorType = 'hand';
-      } 
-      // Text inputs should show text cursor
-      else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        cursorType = 'text';
-      }
-      // Check computed cursor style - browser already does precise hit-testing!
-      else if (cursor === 'text') {
-        cursorType = 'text';
-      }
-      // Check for pointer types
-      else if (cursor === 'pointer' || cursor === 'grab' || cursor === 'grabbing') {
-        cursorType = 'pointer';
-      }
-      // If cursor is 'auto' or 'default', check if we're over text by walking up the tree
-      else if (cursor === 'auto' || cursor === 'default') {
-        // Walk up the DOM tree to find an element with text cursor
-        let currentEl: HTMLElement | null = target;
-        while (currentEl) {
-          const style = window.getComputedStyle(currentEl);
-          if (style.cursor === 'text') {
-            cursorType = 'text';
-            break;
+      const screenX = articleRect.left + rx;
+      const screenY = articleRect.top + ry;
+      const element = document.elementFromPoint(screenX, screenY);
+      
+      if (element) {
+        const target = element as HTMLElement;
+        const computedStyle = window.getComputedStyle(target);
+        const cursor = computedStyle.cursor;
+        
+        if (target.tagName === 'A' || target.closest('a')) {
+          cursorType = 'hand';
+        } else if (target.tagName === 'IMG' || target.closest('img')) {
+          cursorType = 'hand';
+        } else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+          cursorType = 'text';
+        } else if (cursor === 'text') {
+          cursorType = 'text';
+        } else if (cursor === 'pointer' || cursor === 'grab' || cursor === 'grabbing') {
+          cursorType = 'pointer';
+        } else if (cursor === 'auto' || cursor === 'default') {
+          let currentEl: HTMLElement | null = target;
+          while (currentEl) {
+            const style = window.getComputedStyle(currentEl);
+            if (style.cursor === 'text') {
+              cursorType = 'text';
+              break;
+            }
+            if (currentEl.classList.contains('wiki-content')) break;
+            currentEl = currentEl.parentElement;
           }
-          // Stop at wiki-content boundary
-          if (currentEl.classList.contains('wiki-content')) {
-            break;
-          }
-          currentEl = currentEl.parentElement;
         }
       }
     }
@@ -282,7 +367,7 @@ const Game = () => {
       }
       
       if (iconHTML) {
-        const cursorPointerDiv = cursorEl.querySelector('.cursor-pointer');
+        const cursorPointerDiv = cursorEl.querySelector('.cursor-pointer') as HTMLElement;
         if (cursorPointerDiv) {
           cursorPointerDiv.innerHTML = iconHTML;
           
@@ -484,6 +569,13 @@ const Game = () => {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
+      // Calculate percentages for cross-device consistency
+      // y = clientY - rect.top already gives absolute position within article
+      // because rect.top becomes negative when scrolled, effectively adding scroll offset
+      const articleHeight = (articleContainer as HTMLElement).offsetHeight;
+      const qx = x / rect.width;
+      const qy = y / articleHeight;
+      
       // Calculate movement distance since last send (in pixels)
       const dx = x - lastPositionRef.current.x;
       const dy = y - lastPositionRef.current.y;
@@ -510,7 +602,7 @@ const Game = () => {
       let cursorType: string | undefined;
       
       if (target.tagName === 'A' || target.closest('a')) {
-        cursorType = 'pointer'; // Pointer cursor for links
+        cursorType = 'hand'; // Hand cursor for links (user request)
       } else if (target.tagName === 'IMG' || target.closest('img')) {
         cursorType = 'hand'; // Hand cursor for images
       } else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
@@ -541,8 +633,10 @@ const Game = () => {
           }
         }
       }
+      // Find surrounding anchors for accurate cross-device positioning
+      const { anchorId, nextAnchorId, sectionRatio } = findSurroundingAnchors(y, rect);
 
-      sendCursor(x, y, currentArticle || startArticle, cursorType);
+      sendCursor(qx, qy, currentArticle || startArticle, cursorType, anchorId || undefined, nextAnchorId || undefined, sectionRatio);
     };
     
     // Use RAF to continuously monitor position changes (more reliable than scroll events)
@@ -574,9 +668,14 @@ const Game = () => {
               const dy = Math.abs(y - lastPositionRef.current.y);
               
               if (dx > 1 || dy > 1) {
+                const articleHeight = (articleContainer as HTMLElement).offsetHeight;
+                const qx = x / rect.width;
+                const qy = y / articleHeight;
+                const { anchorId, nextAnchorId, sectionRatio } = findSurroundingAnchors(y, rect);
+                
                 lastCursorSendRef.current = now;
                 lastPositionRef.current = { x, y };
-                sendCursor(x, y, currentArticle || startArticle);
+                sendCursor(qx, qy, currentArticle || startArticle, undefined, anchorId || undefined, nextAnchorId || undefined, sectionRatio);
               }
             }
           }
@@ -600,36 +699,58 @@ const Game = () => {
   useEffect(() => {
     if (!isMultiplayer) return;
 
-    const updateContainerPosition = () => {
-      const container = cursorContainerRef.current;
-      if (!container) return;
-      
-      const articleContainer = document.querySelector('.wikipedia-viewer');
-      if (!articleContainer) return;
-      const articleRect = articleContainer.getBoundingClientRect();
-      
-      // Get parent container position for relative positioning
-      const parentContainer = container.parentElement;
-      if (!parentContainer) return;
-      const parentRect = parentContainer.getBoundingClientRect();
-      
-      // Position cursor container relative to parent (for position: absolute)
-      container.style.left = `${articleRect.left - parentRect.left}px`;
-      container.style.top = `${articleRect.top - parentRect.top}px`;
-      container.style.width = `${articleRect.width}px`;
-      container.style.height = `${articleContainer.scrollHeight}px`;
-    };
-
-    // Update on scroll and resize
-    window.addEventListener('scroll', updateContainerPosition, { passive: true });
-    window.addEventListener('resize', updateContainerPosition, { passive: true });
+    // Continuously update cursor positions using RAF with smooth interpolation
+    let rafId: number;
     
-    // Initial update
-    updateContainerPosition();
+    // Store current rendered positions for smooth interpolation
+    // We store article-relative coordinates so the cursor stays pinned during scroll
+    const cursorPositions = new Map<string, { rx: number; ry: number }>();
+    
+    const updateAllCursorPositions = () => {
+      const container = cursorContainerRef.current;
+      if (container) {
+        const articleContainer = document.querySelector('.wikipedia-viewer');
+        if (articleContainer) {
+          
+          // Update each cursor's screen position based on stored article-relative coordinates
+          const cursors = container.querySelectorAll('.other-player-cursor');
+          cursors.forEach((cursor) => {
+            const cursorEl = cursor as HTMLElement;
+            const playerId = cursorEl.getAttribute('data-player-id') || '';
+            const pqx = parseFloat(cursorEl.getAttribute('data-x') || '0');
+            const pqy = parseFloat(cursorEl.getAttribute('data-y') || '0');
+            const anchorId = cursorEl.getAttribute('data-anchor-id') || null;
+            const nextAnchorId = cursorEl.getAttribute('data-next-anchor-id') || null;
+            const sectionRatio = parseFloat(cursorEl.getAttribute('data-section-ratio') || '0');
+            
+            // Convert to target pixel positions using section interpolation
+            const targetRx = pqx * (articleContainer as HTMLElement).offsetWidth;
+            const targetRy = resolveSectionPosition(anchorId, nextAnchorId, sectionRatio, pqy, articleContainer);
+            
+            // Get current position or initialize to target
+            let pos = cursorPositions.get(playerId);
+            if (!pos) {
+              pos = { rx: targetRx, ry: targetRy };
+              cursorPositions.set(playerId, pos);
+            }
+            
+            // Smooth interpolation on relative coordinates (lerp factor 0.3 = responsive but smooth)
+            pos.rx += (targetRx - pos.rx) * 0.3;
+            pos.ry += (targetRy - pos.ry) * 0.3;
+            
+            // Apply coordinates directly as absolute transform
+            cursorEl.style.transform = `translate(${pos.rx}px, ${pos.ry}px)`;
+          });
+        }
+      }
+      
+      rafId = requestAnimationFrame(updateAllCursorPositions);
+    };
+    
+    rafId = requestAnimationFrame(updateAllCursorPositions);
     
     return () => {
-      window.removeEventListener('scroll', updateContainerPosition);
-      window.removeEventListener('resize', updateContainerPosition);
+      cancelAnimationFrame(rafId);
     };
   }, [isMultiplayer]);
 
@@ -684,9 +805,10 @@ const Game = () => {
           }}
           endArticle={endArticle}
           onDestinationReached={() => setRouteCompleted(true)}
-        />
-        {/* Other players' cursors - rendered via direct DOM manipulation for performance */}
-        {isMultiplayer && <div ref={cursorContainerRef} className="cursor-container" />}
+        >
+          {/* Other players' cursors - rendered via direct DOM manipulation for performance */}
+          {isMultiplayer && <div ref={cursorContainerRef} className="cursor-container" />}
+        </WikipediaViewer>
       </div>
       <div className={`game-hud ${hudVisible ? "visible" : ""}`}>
         {/* Scoreboard */}

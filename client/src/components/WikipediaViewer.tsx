@@ -38,6 +38,7 @@ interface WikipediaViewerProps {
   onArticleLoaded?: () => void;
   endArticle?: string;
   onDestinationReached?: () => void;
+  children?: React.ReactNode;
 }
 
 const WikipediaViewer = ({
@@ -47,6 +48,7 @@ const WikipediaViewer = ({
   onArticleLoaded,
   endArticle,
   onDestinationReached,
+  children,
 }: WikipediaViewerProps) => {
   const [articleTitle, setArticleTitle] = useState(initialTitle);
   const [language, setLanguage] = useState("en");
@@ -211,6 +213,7 @@ const WikipediaViewer = ({
           />
         </div>
       )}
+      {children}
     </div>
   );
 };

@@ -12,7 +12,7 @@
 
 /* Main Content */
 .lobby-browser-main {
-  padding: 0 32px 16px 32px;
+  padding: 0 40px 32px 40px;
   max-width: 1440px;
   margin: 0 auto;
   flex: 1;
@@ -30,7 +30,7 @@
 /* Grid Layout */
 .lobby-browser-grid {
   display: grid;
-  grid-template-columns: minmax(clamp(220px, 23vw, 320px), 320px) 1fr;
+  grid-template-columns: minmax(clamp(240px, 25vw, 350px), 350px) 1fr;
   gap: 16px;
   align-items: stretch;
   flex: 1;
@@ -304,7 +304,7 @@
 
 .lobbies-table tbody tr.selected {
   background: linear-gradient(to bottom, #1a4a6c, #153a52) !important;
-  outline: 1px solid #0066cc;
+  box-shadow: inset 0 0 0 1px #0066cc;
 }
 
 .lobbies-table tbody tr.unavailable {

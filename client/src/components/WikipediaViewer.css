@@ -63,6 +63,7 @@
 }
 
 .wikipedia-viewer {
+  position: relative;
   max-width: 1000px;
   /* On smaller screens: space between widget and article equals space on right */
   /* margin-left = widget (360px) + gap, where gap = (viewport - 360 - 1000) / 2 */
@@ -139,7 +140,7 @@
 .wiki-content {
   line-height: 1.6;
   color: var(--wiki-color-base);
-  font-family: sans-serif; /* Wikipedia body text uses sans-serif */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 /* Reset box-sizing for wiki content - override global border-box */
@@ -633,6 +634,54 @@
 
 /* Hide cite reference links */
 .wiki-content a[href*="#cite_note"] {
+  display: none;
+}
+
+/* ===================
+   HIDE NON-ESSENTIAL SECTIONS FOR WIKI RACING
+   These sections add height but don't contain useful article links
+   =================== */
+
+/* Hide References section and all following non-essential sections */
+.wiki-content #References,
+.wiki-content #Notes,
+.wiki-content #Footnotes,
+.wiki-content #Citations,
+.wiki-content #External_links,
+.wiki-content #Bibliography,
+.wiki-content #Further_reading,
+.wiki-content #Works_cited,
+.wiki-content #Sources {
+  display: none;
+}
+
+/* Hide the heading elements containing these sections */
+.wiki-content h2:has(#References),
+.wiki-content h2:has(#Notes),
+.wiki-content h2:has(#Footnotes),
+.wiki-content h2:has(#Citations),
+.wiki-content h2:has(#External_links),
+.wiki-content h2:has(#Bibliography),
+.wiki-content h2:has(#Further_reading),
+.wiki-content h2:has(#Works_cited),
+.wiki-content h2:has(#Sources) {
+  display: none;
+}
+
+/* Hide the content following these headings (reflist, external link lists, etc.) */
+.wiki-content .reflist,
+.wiki-content .references,
+.wiki-content .refbegin,
+.wiki-content .external,
+.wiki-content .sistersitebox,
+.wiki-content .portal,
+.wiki-content .navbox,
+.wiki-content .catlinks {
+  display: none;
+}
+
+/* Hide citation superscripts [1], [2], etc. */
+.wiki-content sup.reference {
   display: none;
 }
 

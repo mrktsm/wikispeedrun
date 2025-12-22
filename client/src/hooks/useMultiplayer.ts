@@ -49,6 +49,9 @@ export interface CursorUpdate {
   y: number;
   article: string;
   cursorType?: string;
+  anchorId?: string;       // ID of the section start heading
+  nextAnchorId?: string;   // ID of the section end heading (or undefined if end of article)
+  sectionRatio?: number;   // 0-1 position between anchorId and nextAnchorId
 }
 
 interface UseMultiplayerOptions {
@@ -264,8 +267,8 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
     sendMessage(MessageTypes.FINISH, { time });
   }, [sendMessage]);
 
-  const sendCursor = useCallback((x: number, y: number, article: string, cursorType?: string) => {
-    sendMessage(MessageTypes.CURSOR, { x, y, article, cursorType });
+  const sendCursor = useCallback((x: number, y: number, article: string, cursorType?: string, anchorId?: string, nextAnchorId?: string, sectionRatio?: number) => {
+    sendMessage(MessageTypes.CURSOR, { x, y, article, cursorType, anchorId, nextAnchorId, sectionRatio });
   }, [sendMessage]);
 
   const disconnect = useCallback((sendLeave = false) => {

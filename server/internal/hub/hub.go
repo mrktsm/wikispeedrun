@@ -420,10 +420,13 @@ func (h *Hub) removeClientFromRoom(client *Client) {
 }
 
 type CursorPayload struct {
-	X          float64 `json:"x"`
-	Y          float64 `json:"y"`
-	Article    string  `json:"article"`
-	CursorType string  `json:"cursorType,omitempty"`
+	X            float64 `json:"x"`
+	Y            float64 `json:"y"`
+	Article      string  `json:"article"`
+	CursorType   string  `json:"cursorType,omitempty"`
+	AnchorId     string  `json:"anchorId,omitempty"`
+	NextAnchorId string  `json:"nextAnchorId,omitempty"`
+	SectionRatio float64 `json:"sectionRatio,omitempty"`
 }
 
 func (h *Hub) handleCursor(client *Client, payload json.RawMessage) {
@@ -452,12 +455,15 @@ func (h *Hub) handleCursor(client *Client, payload json.RawMessage) {
 	h.broadcastToRoom(room, Message{
 		Type: MsgTypeCursorUpdate,
 		Payload: mustMarshal(map[string]interface{}{
-			"playerId":   client.id,
-			"playerName": player.Name,
-			"x":          p.X,
-			"y":          p.Y,
-			"article":    p.Article,
-			"cursorType": p.CursorType,
+			"playerId":     client.id,
+			"playerName":   player.Name,
+			"x":            p.X,
+			"y":            p.Y,
+			"article":      p.Article,
+			"cursorType":   p.CursorType,
+			"anchorId":     p.AnchorId,
+			"nextAnchorId": p.NextAnchorId,
+			"sectionRatio": p.SectionRatio,
 		}),
 	}, client)
 }

@@ -69,22 +69,24 @@
   position: relative;
 }
 
-/* Cursor container - absolute positioning to match article */
+/* Cursor container - absolute positioning inside WikipediaViewer to scroll naturally */
 .cursor-container {
   position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   z-index: 1000;
 }
 
-/* Other players' cursors */
+/* Other players' cursors - absolute to stay pinned on scroll */
 .other-player-cursor {
   position: absolute;
   left: 0;
   top: 0;
   pointer-events: none;
   will-change: transform;
-  /* Smooth interpolation between positions */
-  transition: transform 50ms linear;
 }
 
 .cursor-pointer {
