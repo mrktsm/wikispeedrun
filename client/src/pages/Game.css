@@ -296,3 +296,7 @@
 .same-page-test-button:hover {
   background-color: #242424;
 }
+
+.same-page-test-button-menu {
+  right: 180px;
+}

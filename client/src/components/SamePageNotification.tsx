@@ -35,48 +35,9 @@ const SamePageNotification = ({ playerName, playerColor, visible }: SamePageNoti
 
   if (!shouldRender) return null;
 
-  // Get lighter color for border (mix with white)
-  const getLighterColor = (color: string): string => {
-    const rgbMatch = color.match(/\d+/g);
-    if (rgbMatch && rgbMatch.length >= 3) {
-      const r = parseInt(rgbMatch[0]);
-      const g = parseInt(rgbMatch[1]);
-      const b = parseInt(rgbMatch[2]);
-      // Mix with white (70% original, 30% white) to lighten
-      const lighterR = Math.min(255, Math.floor(r * 0.7 + 255 * 0.3));
-      const lighterG = Math.min(255, Math.floor(g * 0.7 + 255 * 0.3));
-      const lighterB = Math.min(255, Math.floor(b * 0.7 + 255 * 0.3));
-      return `rgb(${lighterR}, ${lighterG}, ${lighterB})`;
-    }
-    return color;
-  };
-
-  // Get very light tinted color for letter (mix heavily with white but keep tint)
-  const getLetterColor = (color: string): string => {
-    const rgbMatch = color.match(/\d+/g);
-    if (rgbMatch && rgbMatch.length >= 3) {
-      const r = parseInt(rgbMatch[0]);
-      const g = parseInt(rgbMatch[1]);
-      const b = parseInt(rgbMatch[2]);
-      // Mix with white (20% original, 80% white) to create a very light tinted version
-      const lightR = Math.min(255, Math.floor(r * 0.2 + 255 * 0.8));
-      const lightG = Math.min(255, Math.floor(g * 0.2 + 255 * 0.8));
-      const lightB = Math.min(255, Math.floor(b * 0.2 + 255 * 0.8));
-      return `rgb(${lightR}, ${lightG}, ${lightB})`;
-    }
-    return '#fff';
-  };
-
   return (
     <div className={`same-page-notification ${isFadingOut ? 'fade-out' : ''}`}>
-      <div 
-        className="notification-avatar"
-        style={{ 
-          backgroundColor: playerColor,
-          borderColor: '#fff',
-          color: getLetterColor(playerColor)
-        }}
-      >
+      <div className="notification-avatar">
         {playerName.charAt(0).toUpperCase()}
       </div>
       <span className="notification-text">

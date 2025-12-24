@@ -12,6 +12,7 @@ interface ScoreboardPlayer {
 interface ScoreboardProps {
   players: Player[];
   currentPlayerClicks: number;
+  maxSlots?: number;
 }
 
 // Cursor colors matching Game.tsx - these are drastically different colors
@@ -38,7 +39,7 @@ const hashStringToIndex = (str: string): number => {
   return Math.abs(hash) % CURSOR_COLORS.length;
 };
 
-const Scoreboard = ({ players, currentPlayerClicks }: ScoreboardProps) => {
+const Scoreboard = ({ players, currentPlayerClicks, maxSlots }: ScoreboardProps) => {
   // Get color based on player name hash (matches cursor colors)
   const getPlayerColor = (name: string): string => {
     const index = hashStringToIndex(name);
@@ -69,9 +70,23 @@ const Scoreboard = ({ players, currentPlayerClicks }: ScoreboardProps) => {
       scoreDiff,
       linksClicked: player.clicks,
       isAhead,
-      colorIndex: 0, // Not used anymore, kept for interface compatibility
+      colorIndex: 0,
     };
   });
+
+  // Pad with empty slots ONLY if maxSlots is provided
+  const paddedPlayers = [...scoreboardPlayers];
+  if (maxSlots) {
+    while (paddedPlayers.length < maxSlots) {
+      paddedPlayers.push({
+        username: "",
+        scoreDiff: "",
+        linksClicked: 0,
+        isAhead: null,
+        colorIndex: 0,
+      });
+    }
+  }
 
   return (
     <div className="scoreboard-widget">
@@ -88,13 +103,13 @@ const Scoreboard = ({ players, currentPlayerClicks }: ScoreboardProps) => {
       </div>
 
       <div className="players-list">
-        {scoreboardPlayers.map((player, index) => (
+        {paddedPlayers.map((player, index) => (
           <div key={index} className="player-row">
             <div 
               className="player-name"
-              style={{ color: getPlayerColor(player.username) }}
+              style={{ color: player.username ? getPlayerColor(player.username) : "transparent" }}
             >
-              {player.username}
+              {player.username || "-"}
             </div>
             <div className="player-stats">
               <span
@@ -106,9 +121,9 @@ const Scoreboard = ({ players, currentPlayerClicks }: ScoreboardProps) => {
                     : ""
                 }`}
               >
-                {player.scoreDiff}
+                {player.scoreDiff || "-"}
               </span>
-              <span className="links-count">{player.linksClicked}</span>
+              <span className="links-count">{player.username ? player.linksClicked : "-"}</span>
             </div>
           </div>
         ))}

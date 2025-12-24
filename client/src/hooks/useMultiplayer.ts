@@ -62,7 +62,8 @@ interface UseMultiplayerOptions {
   onError?: (error: string) => void;
 }
 
-const WS_URL = "ws://localhost:8080/ws";
+// Get WebSocket URL from environment variable, fallback to localhost for development
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws";
 
 export function useMultiplayer(options: UseMultiplayerOptions = {}) {
   const [isConnected, setIsConnected] = useState(false);

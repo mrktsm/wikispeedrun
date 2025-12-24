@@ -132,7 +132,7 @@
   margin-bottom: 20px;
   border-bottom: 2px solid var(--wiki-border-muted);
   padding-bottom: 10px;
-  font-family: "Linux Libertine", "Georgia", "Times", serif;
+  font-family: "Libre Baskerville", "Linux Libertine", "Georgia", "Times", serif;
   font-weight: normal;
   color: var(--wiki-color-base);
 }
@@ -140,7 +140,21 @@
 .wiki-content {
   line-height: 1.6;
   color: var(--wiki-color-base);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  
+  /* Cross-browser text rendering normalization */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Standardize word wrapping behavior */
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none; /* Prevent browser-specific hyphenation differences */
+  
+  /* Normalize letter/word spacing */
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
 /* Reset box-sizing for wiki content - override global border-box */

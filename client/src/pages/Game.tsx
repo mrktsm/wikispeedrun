@@ -7,7 +7,7 @@ import type {
   SegmentData,
 } from "../components/SpeedrunWidget";
 import WikipediaViewer from "../components/WikipediaViewer";
-import VictoryModal from "../components/VictoryModal";
+import VictoryModal, { type ChatMessage } from "../components/VictoryModal";
 import Scoreboard from "../components/Scoreboard";
 import SamePageNotification from "../components/SamePageNotification";
 import { useMultiplayer, type Player, type CursorUpdate } from "../hooks/useMultiplayer";
@@ -47,16 +47,80 @@ const Game = () => {
   const [currentArticle, setCurrentArticle] = useState("");
   const [localClicks, setLocalClicks] = useState(0);
   const [showSamePageNotification, setShowSamePageNotification] = useState(false);
+  const [samePagePlayerName, setSamePagePlayerName] = useState("");
+  const [samePagePlayerColor, setSamePagePlayerColor] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [mockPlayers, setMockPlayers] = useState<Player[]>([]);
   
-  // Auto-hide notification after 3 seconds
+  // Track which players are on the same page (for notifications)
+  const playersOnSamePageRef = useRef<Set<string>>(new Set());
+  
+  // Track previous article for each player to detect when they leave
+  const playerPreviousArticleRef = useRef<Map<string, string>>(new Map());
+  
+  // Track current article in ref for use in callbacks
+  const currentArticleRef = useRef<string>("");
+  
+  // Reset notification state after it finishes showing
+  // This allows the notification to be triggered again
   useEffect(() => {
     if (showSamePageNotification) {
       const timer = setTimeout(() => {
         setShowSamePageNotification(false);
-      }, 3000);
+        // Clear player name/color after a brief delay to allow new notification
+        setTimeout(() => {
+          setSamePagePlayerName("");
+          setSamePagePlayerColor("");
+        }, 100);
+      }, 3000); // Match the notification component's duration
       return () => clearTimeout(timer);
     }
   }, [showSamePageNotification]);
+  
+  // Test toggle for menu
+  const handleToggleMenu = () => {
+    if (!showVictoryModal) {
+      if (!gameStats) {
+        setGameStats({
+          finalTime: "1:05.23",
+          segments: [
+            { name: "Cat", time: "0:00.00", timeDiff: null },
+            { name: "Feline", time: "0:20.00", timeDiff: "+20.0" },
+            { name: "Pet", time: "0:40.00", timeDiff: "+20.0" },
+            { name: "Dog", time: "1:05.23", timeDiff: "+25.2" }
+          ]
+        });
+      }
+      
+      // Add some mock players if testing
+      if (mockPlayers.length === 0) {
+        setMockPlayers([
+          { id: 'p1', name: playerName || "SwiftRunner42", currentArticle: 'Dog', clicks: 3, path: ['Cat', 'Feline', 'Pet', 'Dog'], finished: true, finishTime: 65230 },
+          { id: 'p2', name: 'WikiMaster', currentArticle: 'Dog', clicks: 5, path: ['Cat', 'Animal', 'Mammal', 'Pet', 'Dog'], finished: true, finishTime: 78450 },
+          { id: 'p3', name: 'SpeedyCrawler', currentArticle: 'Pet', clicks: 4, path: ['Cat', 'Domesticated', 'Pet'], finished: false },
+          { id: 'p4', name: 'LinkHunter', currentArticle: 'Cat', clicks: 1, path: ['Cat'], finished: false },
+        ]);
+      }
+      
+      // Add some mock messages if testing
+      if (messages.length === 0) {
+        setMessages([
+          { id: '1', type: 'system', text: 'Race finished!', timestamp: new Date() },
+          { id: '2', type: 'chat', playerName: 'SwiftRunner42', text: 'GG everyone!', timestamp: new Date() },
+          { id: '3', type: 'chat', playerName: 'WikiMaster', text: 'That Dog article was tricky.', timestamp: new Date() },
+        ]);
+      }
+      
+      setShowVictoryModal(true);
+    } else {
+      setShowVictoryModal(false);
+    }
+  };
+
+  // Helper function to get player color
+  const getPlayerColor = useCallback((playerName: string): string => {
+    return CURSOR_COLORS[hashStringToIndex(playerName)];
+  }, []);
   
   // Use ref for cursor data to avoid React re-renders on every cursor update
   const cursorDataRef = useRef<Map<string, CursorUpdate>>(new Map());
@@ -243,6 +307,27 @@ const Game = () => {
   
   // Handle cursor updates from other players - direct DOM manipulation (no re-render)
   const handleCursorUpdate = useCallback((data: CursorUpdate) => {
+    // Only process cursor updates if the player is on the same page as the current player
+    // Use ref to avoid stale closure issues
+    const isOnSamePage = data.article === currentArticleRef.current;
+    
+    // If not on the same page, hide/remove the cursor if it exists
+    if (!isOnSamePage) {
+      const container = cursorContainerRef.current;
+      if (container) {
+        const cursorEl = container.querySelector(`[data-player-id="${data.playerId}"]`) as HTMLElement;
+        if (cursorEl) {
+          cursorEl.style.display = 'none';
+        }
+      }
+      // Remove from same page tracking (so they can trigger notification again when they come back)
+      const wasOnSamePage = playersOnSamePageRef.current.has(data.playerId);
+      if (wasOnSamePage) {
+        playersOnSamePageRef.current.delete(data.playerId);
+      }
+      return;
+    }
+    
     cursorDataRef.current.set(data.playerId, data);
     
     // Direct DOM update - bypasses React for performance
@@ -250,6 +335,10 @@ const Game = () => {
     if (!container) return;
     
     let cursorEl = container.querySelector(`[data-player-id="${data.playerId}"]`) as HTMLElement;
+    
+    // Track if this is a new player joining the same page
+    const wasOnSamePage = playersOnSamePageRef.current.has(data.playerId);
+    const isNewPlayerOnSamePage = !wasOnSamePage && isOnSamePage;
     
     // Create cursor element if it doesn't exist
     if (!cursorEl) {
@@ -292,7 +381,26 @@ const Game = () => {
       }
       
       container.appendChild(cursorEl);
+    } else {
+      // Show cursor if it was previously hidden
+      cursorEl.style.display = '';
     }
+    
+    // Show notification if this is a new player joining the same page (and not the starting page)
+    if (isNewPlayerOnSamePage && currentArticleRef.current !== startArticle) {
+      const playerColor = CURSOR_COLORS[hashStringToIndex(data.playerName)];
+      // Reset notification state first to allow re-triggering
+      setShowSamePageNotification(false);
+      // Use setTimeout to ensure state reset happens before setting new values
+      setTimeout(() => {
+        setSamePagePlayerName(data.playerName);
+        setSamePagePlayerColor(playerColor);
+        setShowSamePageNotification(true);
+      }, 50);
+    }
+    
+    // Track that this player is now on the same page
+    playersOnSamePageRef.current.add(data.playerId);
     
     // Store article-relative coordinates on the element for RAF updates
     cursorEl.setAttribute('data-x', String(data.x));
@@ -438,10 +546,13 @@ const Game = () => {
     } else if (cursorType === 'hand') {
       cursorEl.classList.add('cursor-hand-type');
     }
-  }, []);
+  }, [startArticle]);
 
   // Track current player ID for syncing clicks
   const currentPlayerIdRef = useRef<string | null>(null);
+  
+  // Track player names by ID for notifications
+  const playerNamesRef = useRef<Map<string, string>>(new Map());
   
   // Initialize multiplayer if needed
   const {
@@ -460,6 +571,42 @@ const Game = () => {
       // Sync local clicks with server when our own player is updated
       if (data.playerId === currentPlayerIdRef.current) {
         setLocalClicks(data.clicks);
+      } else {
+        // Use ref to get current article (avoids stale closure)
+        const currentPage = currentArticleRef.current;
+        
+        // Get previous article for this player
+        const previousArticle = playerPreviousArticleRef.current.get(data.playerId);
+        
+        // Update previous article tracking
+        playerPreviousArticleRef.current.set(data.playerId, data.currentArticle);
+        
+        // Check if player left the same page (was on same page, now on different page)
+        if (previousArticle === currentPage && data.currentArticle !== currentPage) {
+          playersOnSamePageRef.current.delete(data.playerId);
+        }
+        
+        // Check if another player navigated to the same page as us
+        // Try to get player name from players list first (most up-to-date)
+        const player = playersRef.current.find(p => p.id === data.playerId);
+        const playerName = player?.name || playerNamesRef.current.get(data.playerId);
+        
+        if (playerName && data.currentArticle === currentPage && currentPage !== startArticle) {
+          // Check if this player just joined the same page (wasn't on it before)
+          const wasOnSamePage = playersOnSamePageRef.current.has(data.playerId);
+          if (!wasOnSamePage) {
+            const playerColor = CURSOR_COLORS[hashStringToIndex(playerName)];
+            // Reset notification state first to allow re-triggering
+            setShowSamePageNotification(false);
+            // Use setTimeout to ensure state reset happens before setting new values
+            setTimeout(() => {
+              setSamePagePlayerName(playerName);
+              setSamePagePlayerColor(playerColor);
+              setShowSamePageNotification(true);
+            }, 50);
+            playersOnSamePageRef.current.add(data.playerId);
+          }
+        }
       }
     },
   });
@@ -469,6 +616,15 @@ const Game = () => {
     // Update ref for use in callbacks
     playersRef.current = players;
     
+    // Update player names map for notifications
+    players.forEach(player => {
+      playerNamesRef.current.set(player.id, player.name);
+      // Initialize previous article tracking if not set
+      if (!playerPreviousArticleRef.current.has(player.id)) {
+        playerPreviousArticleRef.current.set(player.id, player.currentArticle);
+      }
+    });
+    
     const currentPlayer = players.find(p => p.name === playerName);
     if (currentPlayer) {
       currentPlayerIdRef.current = currentPlayer.id;
@@ -477,7 +633,45 @@ const Game = () => {
         setLocalClicks(currentPlayer.clicks);
       }
     }
-  }, [players, playerName, localClicks]);
+    
+    // Check if any players are on the same page as us (when players list updates)
+    // This handles the case where we're already on a page and a player joins
+    if (isMultiplayer && currentArticle && currentArticle !== startArticle) {
+      const currentPage = currentArticleRef.current;
+      const playersOnSamePage = players.filter(
+        p => p.id !== currentPlayerIdRef.current &&
+        p.currentArticle === currentPage &&
+        !playersOnSamePageRef.current.has(p.id)
+      );
+      
+      if (playersOnSamePage.length > 0) {
+        // Show notification for the first player found
+        const firstPlayer = playersOnSamePage[0];
+        const playerColor = CURSOR_COLORS[hashStringToIndex(firstPlayer.name)];
+        // Reset notification state first to allow re-triggering
+        setShowSamePageNotification(false);
+        // Use setTimeout to ensure state reset happens before setting new values
+        setTimeout(() => {
+          setSamePagePlayerName(firstPlayer.name);
+          setSamePagePlayerColor(playerColor);
+          setShowSamePageNotification(true);
+        }, 50);
+        playersOnSamePageRef.current.add(firstPlayer.id);
+      }
+      
+      // Also check if any players left the same page
+      players.forEach(player => {
+        if (player.id !== currentPlayerIdRef.current) {
+          const previousArticle = playerPreviousArticleRef.current.get(player.id);
+          if (previousArticle === currentPage && player.currentArticle !== currentPage) {
+            playersOnSamePageRef.current.delete(player.id);
+          }
+          // Update previous article
+          playerPreviousArticleRef.current.set(player.id, player.currentArticle);
+        }
+      });
+    }
+  }, [players, playerName, localClicks, currentArticle, startArticle, isMultiplayer]);
   
   // Connect to multiplayer - use global flag to prevent duplicate connections
   // during page transitions (two Game components mount simultaneously)
@@ -539,7 +733,31 @@ const Game = () => {
   useEffect(() => {
     setHudVisible(true);
     setArticleLoaded(false);
+    // Initialize current article to start article
+    setCurrentArticle(startArticle);
+    currentArticleRef.current = startArticle;
   }, [startArticle]);
+  
+  // Clear cursors and same-page tracking when current article changes
+  useEffect(() => {
+    if (!isMultiplayer) return;
+    
+    const container = cursorContainerRef.current;
+    if (container) {
+      // Hide all cursors that are not on the current page
+      const cursors = container.querySelectorAll('.other-player-cursor');
+      cursors.forEach((cursor) => {
+        const cursorEl = cursor as HTMLElement;
+        const cursorArticle = cursorEl.getAttribute('data-article') || '';
+        if (cursorArticle !== currentArticle) {
+          cursorEl.style.display = 'none';
+          // Remove from same-page tracking
+          const playerId = cursorEl.getAttribute('data-player-id') || '';
+          playersOnSamePageRef.current.delete(playerId);
+        }
+      });
+    }
+  }, [currentArticle, isMultiplayer]);
 
   // Show victory modal when route is completed
   useEffect(() => {
@@ -572,12 +790,44 @@ const Game = () => {
     
     // Update current article for cursor sharing
     setCurrentArticle(articleName);
+    currentArticleRef.current = articleName;
+    
+    // Clear same-page tracking when we navigate to a new page
+    // This ensures notifications only show when players join us, not when we join them
+    playersOnSamePageRef.current.clear();
     
     // Send navigation to server if multiplayer
     if (isMultiplayer) {
       // Track clicks locally (will be synced with server response)
       setLocalClicks(prev => prev + 1);
       sendNavigate(articleName);
+      
+      // Check if any other players are already on this page (after a short delay to let server update)
+      // Only show notification if it's not the starting page
+      if (articleName !== startArticle) {
+        setTimeout(() => {
+          const playersOnNewPage = playersRef.current.filter(
+            p => p.id !== currentPlayerIdRef.current && 
+            p.currentArticle === articleName &&
+            !playersOnSamePageRef.current.has(p.id)
+          );
+          
+          if (playersOnNewPage.length > 0) {
+            // Show notification for the first player found
+            const firstPlayer = playersOnNewPage[0];
+            const playerColor = CURSOR_COLORS[hashStringToIndex(firstPlayer.name)];
+            // Reset notification state first to allow re-triggering
+            setShowSamePageNotification(false);
+            // Use setTimeout to ensure state reset happens before setting new values
+            setTimeout(() => {
+              setSamePagePlayerName(firstPlayer.name);
+              setSamePagePlayerColor(playerColor);
+              setShowSamePageNotification(true);
+            }, 50);
+            playersOnSamePageRef.current.add(firstPlayer.id);
+          }
+        }, 200);
+      }
     }
   };
 
@@ -755,6 +1005,16 @@ const Game = () => {
           cursors.forEach((cursor) => {
             const cursorEl = cursor as HTMLElement;
             const playerId = cursorEl.getAttribute('data-player-id') || '';
+            const cursorArticle = cursorEl.getAttribute('data-article') || '';
+            
+            // Only show cursor if it's on the same page
+            if (cursorArticle !== currentArticle) {
+              cursorEl.style.display = 'none';
+              return;
+            }
+            
+            cursorEl.style.display = '';
+            
             const pqx = parseFloat(cursorEl.getAttribute('data-x') || '0');
             const pqy = parseFloat(cursorEl.getAttribute('data-y') || '0');
             const anchorId = cursorEl.getAttribute('data-anchor-id') || null;
@@ -790,7 +1050,7 @@ const Game = () => {
     return () => {
       cancelAnimationFrame(rafId);
     };
-  }, [isMultiplayer]);
+  }, [isMultiplayer, currentArticle]);
 
   // Note: Cursor cleanup is handled by the server disconnecting players
 
@@ -892,22 +1152,35 @@ const Game = () => {
           segments={gameStats.segments}
           startArticle={startArticle}
           endArticle={endArticle}
+          players={mockPlayers.length > 0 ? mockPlayers : players}
+          messages={messages}
+          currentPlayerClicks={localClicks}
           onPlayAgain={handlePlayAgain}
           onNewRoute={handleNewRoute}
+          onSendMessage={(text: string) => {
+            setMessages(prev => [...prev, {
+              id: Date.now().toString(),
+              type: 'chat',
+              playerName: playerName || "You",
+              text,
+              timestamp: new Date()
+            }]);
+          }}
         />
       )}
       {/* Same page notification */}
       <SamePageNotification
-        playerName="TestPlayer"
-        playerColor="rgba(52, 152, 219, 1)"
+        playerName={samePagePlayerName}
+        playerColor={samePagePlayerColor}
         visible={showSamePageNotification}
       />
-      {/* Test button to toggle notification */}
+
+      {/* Test button to toggle menu */}
       <button
-        className="same-page-test-button"
-        onClick={() => setShowSamePageNotification(true)}
+        className="same-page-test-button same-page-test-button-menu"
+        onClick={handleToggleMenu}
       >
-        Show Notification
+        Show Menu
       </button>
     </div>
   );

@@ -356,7 +356,7 @@
 
 .leaderboard-table tbody tr {
   border-bottom: 1px solid #333;
-  transition: background 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .leaderboard-table tbody tr:nth-child(odd) {
@@ -368,7 +368,8 @@
 }
 
 .leaderboard-table tbody tr:hover {
-  background: linear-gradient(to bottom, #1a3a5c, #152a42) !important;
+  background-color: rgba(26, 58, 92, 0.7) !important;
+  background-image: linear-gradient(to bottom, rgba(26, 58, 92, 0.7), rgba(21, 42, 66, 0.7)) !important;
 }
 
 .leaderboard-table tbody tr:last-child {

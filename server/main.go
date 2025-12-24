@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/markotsymbaluk/wiki-racing/internal/hub"
 )
@@ -20,11 +21,18 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
-	log.Println("Racing server starting on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	// Get port from environment variable (Railway provides this)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Racing server starting on :%s", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
+
 
 
 

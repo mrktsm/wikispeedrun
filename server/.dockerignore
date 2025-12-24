@@ -1,0 +1,21 @@
+# Binaries
+wiki-racing
+server
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
