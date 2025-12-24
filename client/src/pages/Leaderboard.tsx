@@ -99,9 +99,7 @@ const Leaderboard = () => {
   const endDropdownRef = useRef<HTMLDivElement>(null);
 
   // Debounced search
-  const debounceRef = useRef<{ start?: NodeJS.Timeout; end?: NodeJS.Timeout }>(
-    {}
-  );
+  const debounceRef = useRef<{ start?: number; end?: number }>({});
 
   const searchStart = useCallback(
     (query: string) => {

@@ -15,11 +15,6 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-// Generate random lobby code
-function generateLobbyCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
 // Generate random player name - cached in sessionStorage to survive page transitions
 function getOrCreatePlayerName(): string {
   const stored = sessionStorage.getItem("wiki-race-player-name");

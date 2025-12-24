@@ -117,11 +117,6 @@ const Game = () => {
     }
   };
 
-  // Helper function to get player color
-  const getPlayerColor = useCallback((playerName: string): string => {
-    return CURSOR_COLORS[hashStringToIndex(playerName)];
-  }, []);
-  
   // Use ref for cursor data to avoid React re-renders on every cursor update
   const cursorDataRef = useRef<Map<string, CursorUpdate>>(new Map());
   const cursorContainerRef = useRef<HTMLDivElement>(null);

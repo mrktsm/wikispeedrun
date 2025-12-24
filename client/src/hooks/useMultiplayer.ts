@@ -69,13 +69,12 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
   const [isConnected, setIsConnected] = useState(false);
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [myPlayerId, setMyPlayerId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
   const optionsRef = useRef(options);
-  const handleMessageRef = useRef<(message: WebSocketMessage) => void>();
+  const handleMessageRef = useRef<((message: WebSocketMessage) => void) | null>(null);
   
   // Keep options ref updated
   useEffect(() => {
@@ -305,9 +304,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
     isConnected,
     roomState,
     players,
-    myPlayerId,
     error,
-    isHost: players.length > 0 && players[0]?.id === myPlayerId,
     
     // Actions
     connect,
