@@ -125,6 +125,10 @@
   padding: 10px 15px;
   border-radius: 8px;
   overflow: visible; /* Don't clip floated content */
+  
+  /* Performance: CSS containment for faster rendering */
+  contain: layout style paint;
+  content-visibility: auto;
 }
 
 .wiki-title {

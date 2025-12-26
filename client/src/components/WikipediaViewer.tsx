@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef, useMemo } from "react";
 import DOMPurify from "dompurify";
 import "./WikipediaViewer.css";
-import WikipediaSkeleton from "./WikipediaSkeleton";
 
 interface WikiApiArticle {
   parse?: {
@@ -52,20 +51,37 @@ const WikipediaViewer = ({
 }: WikipediaViewerProps) => {
   const [articleTitle, setArticleTitle] = useState(initialTitle);
   const [language, setLanguage] = useState("en");
+  const queryClient = useQueryClient();
+  
+  // Keep track of currently DISPLAYED article (separate from fetching state)
+  const [displayedArticle, setDisplayedArticle] = useState<WikiApiArticle | null>(null);
+  
+  // Track hover state for preloading
+  const hoverTimeoutRef = useRef<number | null>(null);
+  const preloadedLinksRef = useRef<Set<string>>(new Set());
 
   const { data, isFetching, isError } = useQuery({
     queryKey: ["article", articleTitle, language],
     queryFn: () => getArticleData(language, articleTitle),
     enabled: Boolean(articleTitle),
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // Cache articles for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
+  
+  // Update displayed article only when new data is ready
+  useEffect(() => {
+    if (data && !isFetching && data.parse?.text) {
+      setDisplayedArticle(data);
+    }
+  }, [data, isFetching]);
 
   // Notify when article loads
   useEffect(() => {
-    if (data?.parse?.text && !isFetching && onArticleLoaded) {
+    if (displayedArticle?.parse?.text && onArticleLoaded) {
       onArticleLoaded();
     }
-  }, [data, isFetching, onArticleLoaded]);
+  }, [displayedArticle, onArticleLoaded]);
 
   // Detect destination reached
   useEffect(() => {
@@ -83,6 +99,103 @@ const WikipediaViewer = ({
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLanguage(e.target.value);
   };
+  
+  // Handle mouse movement for link preloading
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const link = target.closest("a");
+    
+    // Clear previous timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    
+    if (!link) return;
+    
+    const href = link.getAttribute("href");
+    if (!href || !href.startsWith("/wiki/")) return;
+    
+    const linkTitle = decodeURIComponent(href.replace("/wiki/", ""));
+    
+    // Skip special pages
+    if (linkTitle.includes(":")) return;
+    
+    // Debounce hover events (only preload if hovering for 150ms)
+    hoverTimeoutRef.current = setTimeout(() => {
+      if (href && href.startsWith("/wiki/")) {
+        const title = decodeURIComponent(href.replace("/wiki/", ""));
+        
+        // Skip special pages and already preloaded links
+        if (!title.includes(":") && !preloadedLinksRef.current.has(title)) {
+          console.log(`[Preload] Hover-prefetching: ${title}`);
+          preloadedLinksRef.current.add(title);
+          
+          // Prefetch the article
+          queryClient.prefetchQuery({
+            queryKey: ["article", title, language],
+            queryFn: () => getArticleData(language, title),
+            staleTime: 5 * 60 * 1000,
+          });
+        }
+      }
+    }, 150);
+  };
+  
+  // Cleanup hover timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Performance: Lazy load images and async decoding
+  useEffect(() => {
+    if (!displayedArticle) return;
+    
+    const images = document.querySelectorAll('.wiki-content img');
+    images.forEach((img) => {
+      img.setAttribute('loading', 'lazy');
+      img.setAttribute('decoding', 'async');
+    });
+  }, [displayedArticle]);
+  
+  // Performance: Preload first 5 article links immediately (high probability of being clicked)
+  useEffect(() => {
+    if (!displayedArticle) return;
+    
+    // Wait a bit for DOM to settle, then preload top links
+    const timeoutId = setTimeout(() => {
+      const links = document.querySelectorAll('.wiki-content a[href^="/wiki/"]');
+      const topLinks = Array.from(links).slice(0, 5);
+      
+      topLinks.forEach((link) => {
+        const href = link.getAttribute('href');
+        if (href) {
+          const title = decodeURIComponent(href.replace('/wiki/', ''));
+          if (!title.includes(':') && !preloadedLinksRef.current.has(title)) {
+            preloadedLinksRef.current.add(title);
+            console.log(`[Preload] Auto-prefetching top link: ${title}`);
+            queryClient.prefetchQuery({
+              queryKey: ['article', title, language],
+              queryFn: () => getArticleData(language, title),
+              staleTime: 5 * 60 * 1000,
+            });
+          }
+        }
+      });
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [displayedArticle, language, queryClient]);
+  
+  // Performance: Memoize DOMPurify sanitization (expensive operation)
+  const sanitizedHTML = useMemo(() => {
+    if (!displayedArticle?.parse?.text?.["*"]) return '';
+    return DOMPurify.sanitize(displayedArticle.parse.text["*"]);
+  }, [displayedArticle?.parse?.text]);
 
   const handleArticleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -116,35 +229,6 @@ const WikipediaViewer = ({
       }
     }
   };
-
-  if (isFetching) {
-    return (
-      <div className="wikipedia-viewer">
-        {!hideControls && (
-          <div className="wiki-controls">
-            <input
-              type="text"
-              value={articleTitle}
-              onChange={handleTitleChange}
-              placeholder="Enter Wikipedia article title"
-              className="wiki-input"
-            />
-            <select
-              value={language}
-              onChange={handleLanguageChange}
-              className="wiki-select"
-            >
-              <option value="en">English</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-              <option value="de">German</option>
-            </select>
-          </div>
-        )}
-        <WikipediaSkeleton />
-      </div>
-    );
-  }
 
   if (isError) {
     return (
@@ -201,14 +285,15 @@ const WikipediaViewer = ({
         </div>
       )}
 
-      {data?.parse?.text?.["*"] && (
+      {sanitizedHTML && (
         <div className="wiki-article">
-          <h1 className="wiki-title">{data.parse.title}</h1>
+          <h1 className="wiki-title">{displayedArticle?.parse?.title}</h1>
           <div
             className="wiki-content"
             onClick={handleArticleClick}
+            onMouseMove={handleMouseMove}
             dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(data.parse.text["*"]),
+              __html: sanitizedHTML,
             }}
           />
         </div>
