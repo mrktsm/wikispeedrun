@@ -17,6 +17,7 @@ interface Segment {
 
 interface SpeedrunWidgetProps {
   gameMode?: string;
+  startArticle?: string;
   endArticle?: string;
   isRunning?: boolean;
   isStopped?: boolean;
@@ -40,6 +41,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
   (
     {
       gameMode = "Single Player",
+      startArticle = "Start",
       endArticle = "Link to reach",
       isMultiplayer = false,
       isRunning = false,
@@ -48,6 +50,13 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
     ref
   ) => {
     const [currentTime, setCurrentTime] = useState("0:00.00");
+    
+    // Truncate article names to max characters with ellipsis
+    const truncateArticleName = (name: string, maxLength: number = 25): string => {
+      const cleanName = name.replace(/_/g, " ");
+      if (cleanName.length <= maxLength) return cleanName;
+      return cleanName.substring(0, maxLength) + "...";
+    };
 
     // Determine timer color class
     const getTimerClass = () => {
@@ -238,7 +247,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
       <div className={`speedrun-widget ${isMultiplayer ? 'multiplayer-mode' : ''}`}>
         <div className="speedrun-header">
           <div className="game-title">
-            <div>{endArticle.replace(/_/g, " ")}</div>
+            <div>{truncateArticleName(startArticle, 20)} to {truncateArticleName(endArticle, 20)}</div>
             <div className="category">{gameMode} • Random</div>
           </div>
         </div>
@@ -252,7 +261,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
                 segment.isCurrent ? "current-segment" : ""
               }`}
             >
-              <div className="segment-name">{segment.name}</div>
+              <div className="segment-name">{truncateArticleName(segment.name, 25)}</div>
               <div className="segment-times">
                 {segment.timeDiff && (
                   <span
