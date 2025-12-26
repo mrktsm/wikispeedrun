@@ -282,8 +282,35 @@ const Game = () => {
     // Helper to get heading top relative to article using layout offset
     // This is much more stable than getBoundingClientRect regarding scroll/sticky headers
     const getHeadingTop = (id: string, container: Element): number | null => {
-        const anchor = document.getElementById(id);
-        if (!anchor) return null;
+        // Try exact ID match first
+        let anchor = document.getElementById(id);
+        
+        // If not found, try finding by mw-headline span with matching ID
+        if (!anchor) {
+          const headlineSpan = container.querySelector(`.mw-headline[id="${id}"]`);
+          if (headlineSpan) {
+            anchor = headlineSpan as HTMLElement;
+          }
+        }
+        
+        // If still not found, try case-insensitive search (some IDs may have different casing)
+        if (!anchor) {
+          const allHeadings = container.querySelectorAll('.wiki-content h2, .wiki-content h3, .wiki-content h4');
+          for (const heading of allHeadings) {
+            const headlineSpan = heading.querySelector('.mw-headline');
+            const headingId = headlineSpan?.id || (heading as HTMLElement).id;
+            if (headingId && headingId.toLowerCase() === id.toLowerCase()) {
+              anchor = (headlineSpan || heading) as HTMLElement;
+              break;
+            }
+          }
+        }
+        
+        if (!anchor) {
+          console.warn(`[Cursor] Heading anchor not found: ${id}`);
+          return null;
+        }
+        
         const heading = anchor.closest('h2, h3, h4') || anchor;
         return getRelativeTop(heading as HTMLElement, container);
     };
@@ -294,12 +321,25 @@ const Game = () => {
     const startTop = anchorId ? getHeadingTop(anchorId, articleContainer) : 0;
     const endTop = nextAnchorId ? getHeadingTop(nextAnchorId, articleContainer) : articleBottom;
     
-    // If we resolved the boundaries successfully, interpolate!
+    // PRIORITY 1: Both anchors found - use precise interpolation
     if (startTop !== null && endTop !== null) {
         return startTop + (endTop - startTop) * sectionRatio;
     }
     
-    // Fallback: use percentage-based position
+    // PRIORITY 2: Start anchor found but end is missing - interpolate to article bottom
+    if (startTop !== null && endTop === null) {
+        console.warn(`[Cursor] Using partial section positioning (start anchor found, end missing)`);
+        return startTop + (articleBottom - startTop) * sectionRatio;
+    }
+    
+    // PRIORITY 3: End anchor found but start is missing - interpolate from article top
+    if (startTop === null && endTop !== null) {
+        console.warn(`[Cursor] Using partial section positioning (end anchor found, start missing)`);
+        return endTop * sectionRatio;
+    }
+    
+    // PRIORITY 4: No anchors found - use percentage fallback (least accurate)
+    console.warn(`[Cursor] Using percentage fallback positioning (no anchors found)`);
     return fallbackQy * articleBottom;
   };
   
