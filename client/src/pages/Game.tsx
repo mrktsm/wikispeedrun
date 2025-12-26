@@ -336,10 +336,6 @@ const Game = () => {
     
     let cursorEl = container.querySelector(`[data-player-id="${data.playerId}"]`) as HTMLElement;
     
-    // Track if this is a new player joining the same page
-    const wasOnSamePage = playersOnSamePageRef.current.has(data.playerId);
-    const isNewPlayerOnSamePage = !wasOnSamePage && isOnSamePage;
-    
     // Create cursor element if it doesn't exist
     if (!cursorEl) {
       cursorEl = document.createElement('div');
