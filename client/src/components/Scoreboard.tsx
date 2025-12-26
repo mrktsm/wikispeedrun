@@ -93,7 +93,7 @@ const Scoreboard = ({ players, currentPlayerClicks, maxSlots }: ScoreboardProps)
       <div className="scoreboard-header">
         <div className="scoreboard-title">
           <div className="title-row">
-            <span>Scoreboard</span>
+            <span>Players</span>
             <div className="stats-header-labels">
               <span className="stats-header-diff">Diff</span>
               <span className="stats-header-links">Links</span>
