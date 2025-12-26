@@ -205,17 +205,23 @@ const Game = () => {
   
   // Find surrounding anchors (heading above and heading below) for section interpolation
   // This solves the "vertical stretching" issue where sections have different heights on different screens
-  const findSurroundingAnchors = (cursorY: number, articleRect: DOMRect): { 
+  const findSurroundingAnchors = (cursorY: number): { 
     anchorId: string | null; 
     nextAnchorId: string | null; 
     sectionRatio: number;
   } => {
+    const articleContainer = document.querySelector('.wikipedia-viewer');
+    if (!articleContainer) {
+      return { anchorId: null, nextAnchorId: null, sectionRatio: 0 };
+    }
+    
     // Get all headings and sort them by top position
+    // Use getRelativeTop for consistency with resolveSectionPosition
     const headings = Array.from(document.querySelectorAll('.wiki-content h2, .wiki-content h3, .wiki-content h4'))
       .map(heading => {
         const headlineSpan = heading.querySelector('.mw-headline');
         const anchorId = headlineSpan?.id || (heading as HTMLElement).id;
-        const top = heading.getBoundingClientRect().top - articleRect.top;
+        const top = getRelativeTop(heading as HTMLElement, articleContainer);
         return { anchorId, top };
       })
       .filter(h => h.anchorId) // Filter out headings without IDs
@@ -237,8 +243,7 @@ const Game = () => {
     const prev = prevIndex >= 0 ? headings[prevIndex] : null;
     const next = prevIndex + 1 < headings.length ? headings[prevIndex + 1] : null;
     
-    const articleContainer = document.querySelector('.wikipedia-viewer');
-    const articleBottom = articleContainer ? (articleContainer as HTMLElement).offsetHeight : articleRect.height;
+    const articleBottom = (articleContainer as HTMLElement).offsetHeight;
     
     // Define the Y range of this section
     const sectionTop = prev ? prev.top : 0; // Top of article if no prev anchor
@@ -381,21 +386,10 @@ const Game = () => {
       cursorEl.style.display = '';
     }
     
-    // Show notification if this is a new player joining the same page (and not the starting page)
-    if (isNewPlayerOnSamePage && currentArticleRef.current !== startArticle) {
-      const playerColor = CURSOR_COLORS[hashStringToIndex(data.playerName)];
-      // Reset notification state first to allow re-triggering
-      setShowSamePageNotification(false);
-      // Use setTimeout to ensure state reset happens before setting new values
-      setTimeout(() => {
-        setSamePagePlayerName(data.playerName);
-        setSamePagePlayerColor(playerColor);
-        setShowSamePageNotification(true);
-      }, 50);
-    }
-    
     // Track that this player is now on the same page
     playersOnSamePageRef.current.add(data.playerId);
+    
+    // Note: Notification is handled by onPlayerUpdate callback for consistency
     
     // Store article-relative coordinates on the element for RAF updates
     cursorEl.setAttribute('data-x', String(data.x));
@@ -586,21 +580,28 @@ const Game = () => {
         const player = playersRef.current.find(p => p.id === data.playerId);
         const playerName = player?.name || playerNamesRef.current.get(data.playerId);
         
-        if (playerName && data.currentArticle === currentPage && currentPage !== startArticle) {
+        // Show notification when player joins the same page (but not if we just joined them)
+        if (playerName && data.currentArticle === currentPage && currentPage !== startArticle && previousArticle !== currentPage) {
           // Check if this player just joined the same page (wasn't on it before)
           const wasOnSamePage = playersOnSamePageRef.current.has(data.playerId);
           if (!wasOnSamePage) {
+            console.log(`[Notification] ${playerName} joined same page: ${currentPage}`);
             const playerColor = CURSOR_COLORS[hashStringToIndex(playerName)];
-            // Reset notification state first to allow re-triggering
+            playersOnSamePageRef.current.add(data.playerId);
+            
+            // Trigger notification
             setShowSamePageNotification(false);
-            // Use setTimeout to ensure state reset happens before setting new values
             setTimeout(() => {
               setSamePagePlayerName(playerName);
               setSamePagePlayerColor(playerColor);
               setShowSamePageNotification(true);
             }, 50);
-            playersOnSamePageRef.current.add(data.playerId);
           }
+        }
+        
+        // If player joined our page, mark them as tracked
+        if (data.currentArticle === currentPage) {
+          playersOnSamePageRef.current.add(data.playerId);
         }
       }
     },
@@ -629,32 +630,9 @@ const Game = () => {
       }
     }
     
-    // Check if any players are on the same page as us (when players list updates)
-    // This handles the case where we're already on a page and a player joins
-    if (isMultiplayer && currentArticle && currentArticle !== startArticle) {
+    // Update tracking for players who left the same page
+    if (isMultiplayer && currentArticle) {
       const currentPage = currentArticleRef.current;
-      const playersOnSamePage = players.filter(
-        p => p.id !== currentPlayerIdRef.current &&
-        p.currentArticle === currentPage &&
-        !playersOnSamePageRef.current.has(p.id)
-      );
-      
-      if (playersOnSamePage.length > 0) {
-        // Show notification for the first player found
-        const firstPlayer = playersOnSamePage[0];
-        const playerColor = CURSOR_COLORS[hashStringToIndex(firstPlayer.name)];
-        // Reset notification state first to allow re-triggering
-        setShowSamePageNotification(false);
-        // Use setTimeout to ensure state reset happens before setting new values
-        setTimeout(() => {
-          setSamePagePlayerName(firstPlayer.name);
-          setSamePagePlayerColor(playerColor);
-          setShowSamePageNotification(true);
-        }, 50);
-        playersOnSamePageRef.current.add(firstPlayer.id);
-      }
-      
-      // Also check if any players left the same page
       players.forEach(player => {
         if (player.id !== currentPlayerIdRef.current) {
           const previousArticle = playerPreviousArticleRef.current.get(player.id);
@@ -787,41 +765,38 @@ const Game = () => {
     setCurrentArticle(articleName);
     currentArticleRef.current = articleName;
     
-    // Clear same-page tracking when we navigate to a new page
-    // This ensures notifications only show when players join us, not when we join them
-    playersOnSamePageRef.current.clear();
-    
     // Send navigation to server if multiplayer
     if (isMultiplayer) {
       // Track clicks locally (will be synced with server response)
       setLocalClicks(prev => prev + 1);
       sendNavigate(articleName);
       
-      // Check if any other players are already on this page (after a short delay to let server update)
-      // Only show notification if it's not the starting page
+      // When WE navigate, check if anyone is already on the new page
+      // (onPlayerUpdate won't fire for them since they didn't move)
       if (articleName !== startArticle) {
+        // Small delay to let state update
         setTimeout(() => {
-          const playersOnNewPage = playersRef.current.filter(
+          const playersAlreadyThere = playersRef.current.filter(
             p => p.id !== currentPlayerIdRef.current && 
             p.currentArticle === articleName &&
             !playersOnSamePageRef.current.has(p.id)
           );
           
-          if (playersOnNewPage.length > 0) {
+          if (playersAlreadyThere.length > 0) {
+            console.log(`[Notification] Found ${playersAlreadyThere.length} player(s) already on ${articleName}`);
             // Show notification for the first player found
-            const firstPlayer = playersOnNewPage[0];
+            const firstPlayer = playersAlreadyThere[0];
             const playerColor = CURSOR_COLORS[hashStringToIndex(firstPlayer.name)];
-            // Reset notification state first to allow re-triggering
+            playersOnSamePageRef.current.add(firstPlayer.id);
+            
             setShowSamePageNotification(false);
-            // Use setTimeout to ensure state reset happens before setting new values
             setTimeout(() => {
               setSamePagePlayerName(firstPlayer.name);
               setSamePagePlayerColor(playerColor);
               setShowSamePageNotification(true);
             }, 50);
-            playersOnSamePageRef.current.add(firstPlayer.id);
           }
-        }, 200);
+        }, 100);
       }
     }
   };
@@ -856,7 +831,8 @@ const Game = () => {
       // y = clientY - rect.top already gives absolute position within article
       // because rect.top becomes negative when scrolled, effectively adding scroll offset
       const articleHeight = (articleContainer as HTMLElement).offsetHeight;
-      const qx = x / rect.width;
+      const articleWidth = (articleContainer as HTMLElement).offsetWidth;
+      const qx = x / articleWidth; // Use offsetWidth consistently (same as receiver)
       const qy = y / articleHeight;
       
       // Calculate movement distance since last send (in pixels)
@@ -917,7 +893,7 @@ const Game = () => {
         }
       }
       // Find surrounding anchors for accurate cross-device positioning
-      const { anchorId, nextAnchorId, sectionRatio } = findSurroundingAnchors(y, rect);
+      const { anchorId, nextAnchorId, sectionRatio } = findSurroundingAnchors(y);
 
       sendCursor(qx, qy, currentArticle || startArticle, cursorType, anchorId || undefined, nextAnchorId || undefined, sectionRatio);
     };
@@ -952,9 +928,10 @@ const Game = () => {
               
               if (dx > 1 || dy > 1) {
                 const articleHeight = (articleContainer as HTMLElement).offsetHeight;
-                const qx = x / rect.width;
+                const articleWidth = (articleContainer as HTMLElement).offsetWidth;
+                const qx = x / articleWidth; // Use offsetWidth consistently (same as receiver)
                 const qy = y / articleHeight;
-                const { anchorId, nextAnchorId, sectionRatio } = findSurroundingAnchors(y, rect);
+                const { anchorId, nextAnchorId, sectionRatio } = findSurroundingAnchors(y);
                 
                 lastCursorSendRef.current = now;
                 lastPositionRef.current = { x, y };
@@ -989,11 +966,22 @@ const Game = () => {
     // We store article-relative coordinates so the cursor stays pinned during scroll
     const cursorPositions = new Map<string, { rx: number; ry: number }>();
     
+    // Track last article width to detect resize
+    let lastArticleWidth = 0;
+    
     const updateAllCursorPositions = () => {
       const container = cursorContainerRef.current;
       if (container) {
         const articleContainer = document.querySelector('.wikipedia-viewer');
         if (articleContainer) {
+          const currentArticleWidth = (articleContainer as HTMLElement).offsetWidth;
+          
+          // Detect window resize - reset cursor positions to prevent "traveling"
+          if (lastArticleWidth > 0 && Math.abs(currentArticleWidth - lastArticleWidth) > 1) {
+            // Clear interpolated positions to force immediate snap to new positions
+            cursorPositions.clear();
+          }
+          lastArticleWidth = currentArticleWidth;
           
           // Update each cursor's screen position based on stored article-relative coordinates
           const cursors = container.querySelectorAll('.other-player-cursor');
@@ -1017,7 +1005,7 @@ const Game = () => {
             const sectionRatio = parseFloat(cursorEl.getAttribute('data-section-ratio') || '0');
             
             // Convert to target pixel positions using section interpolation
-            const targetRx = pqx * (articleContainer as HTMLElement).offsetWidth;
+            const targetRx = pqx * currentArticleWidth;
             const targetRy = resolveSectionPosition(anchorId, nextAnchorId, sectionRatio, pqy, articleContainer);
             
             // Get current position or initialize to target
@@ -1047,7 +1035,30 @@ const Game = () => {
     };
   }, [isMultiplayer, currentArticle]);
 
-  // Note: Cursor cleanup is handled by the server disconnecting players
+  // Clean up cursor elements for players who have disconnected
+  useEffect(() => {
+    if (!isMultiplayer) return;
+    
+    const container = cursorContainerRef.current;
+    if (!container) return;
+    
+    // Get all cursor elements
+    const cursorElements = container.querySelectorAll('.other-player-cursor');
+    const activePlayerIds = new Set(players.map(p => p.id));
+    
+    // Remove cursors for players no longer in the room
+    cursorElements.forEach((cursorEl) => {
+      const playerId = (cursorEl as HTMLElement).getAttribute('data-player-id');
+      if (playerId && !activePlayerIds.has(playerId)) {
+        console.log('Removing cursor for disconnected player:', playerId);
+        cursorEl.remove();
+        // Clean up related data
+        cursorDataRef.current.delete(playerId);
+        highlightedElementsRef.current.delete(playerId);
+        playersOnSamePageRef.current.delete(playerId);
+      }
+    });
+  }, [players, isMultiplayer]);
 
   const handlePlayAgain = () => {
     // Restart with same route
