@@ -9,6 +9,7 @@ import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
 import RaceLobby from "./pages/RaceLobby";
 import LobbyBrowser from "./pages/LobbyBrowser";
+import Profile from "./pages/Profile";
 import "./App.css";
 
 // Define route order for determining slide direction
@@ -18,6 +19,7 @@ const routeOrder: Record<string, number> = {
   "/leaderboard": 2,
   "/race-lobby": 1,
   "/lobby-browser": 1,
+  "/profile": 2,
 };
 
 function getRouteIndex(pathname: string): number {
@@ -89,6 +91,7 @@ function AppRoutes() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/race-lobby" element={<RaceLobby />} />
             <Route path="/lobby-browser" element={<LobbyBrowser />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </div>
       )}
@@ -103,6 +106,7 @@ function AppRoutes() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/race-lobby" element={<RaceLobby />} />
           <Route path="/lobby-browser" element={<LobbyBrowser />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </div>
