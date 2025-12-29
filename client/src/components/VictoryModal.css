@@ -13,12 +13,13 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-rows: minmax(min-content, 180px) auto 1fr;
+  justify-items: center;
   z-index: 10000;
-  padding: 24px;
+  padding: 0 24px;
   backdrop-filter: blur(8px);
+  overflow-y: auto;
 }
 
 .victory-container {
@@ -28,7 +29,17 @@
   max-width: 1100px;
   width: auto;
   position: relative;
+  grid-row: 2;
   animation: victory-appear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.victory-banner-row {
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  align-self: center;
 }
 
 @keyframes victory-appear {
@@ -36,6 +47,7 @@
     opacity: 0;
     transform: scale(0.95) translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -53,15 +65,14 @@
 }
 
 .victory-status-banner {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  color: #99cc33; /* Softened lime green */
+  width: 1000px;
+  /* Fixed width to match container content (340 + 20 + 640) */
+  max-width: 100%;
+  color: #99cc33;
+  /* Softened lime green */
   font-weight: 700;
   font-size: 24px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
@@ -103,7 +114,8 @@
 }
 
 .victory-status-banner.is-me {
-  color: #99cc33; /* Original green for "You Won" */
+  color: #99cc33;
+  /* Original green for "You Won" */
 }
 
 .victory-status-icon {
@@ -198,7 +210,8 @@
   /* Section itself scrolls so 10 rows are visible at once */
   max-height: calc(var(--path-row-height) * 10);
   overflow-y: auto;
-  flex: 1; /* Allow path section to grow to fill modal height if needed */
+  flex: 1;
+  /* Allow path section to grow to fill modal height if needed */
 }
 
 .victory-path-header {
@@ -215,15 +228,14 @@
   border-bottom: 1px solid #333;
 }
 
-.victory-path-list {
-  /* takes natural height; scrolling handled by section */
-}
+
 
 /* Path items - matches segment style */
 .victory-path-item {
   display: flex;
   align-items: center;
-  padding: 0 10px; /* horizontal only so height is fixed */
+  padding: 0 10px;
+  /* horizontal only so height is fixed */
   height: var(--path-row-height);
   font-size: 16px;
   border-bottom: 1px solid #333;
@@ -357,7 +369,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  align-self: stretch; /* Stretch to accommodate left panel height */
+  align-self: stretch;
+  /* Stretch to accommodate left panel height */
 }
 
 /* Override Scoreboard fixed positioning when inside Victory Modal */
@@ -378,19 +391,22 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  flex: 1; /* Take up all remaining vertical space to match left panel height */
+  flex: 1;
+  /* Take up all remaining vertical space to match left panel height */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   overflow: hidden;
 }
 
 .victory-chat-header {
-  padding: 0; /* Handled by scoreboard-header class */
+  padding: 0;
+  /* Handled by scoreboard-header class */
   margin: 0;
 }
 
 .victory-chat-header .scoreboard-title {
   margin: 0;
-  border-top: none; /* Already has container border */
+  border-top: none;
+  /* Already has container border */
 }
 
 .victory-chat-messages {
@@ -455,4 +471,3 @@
 .victory-chat-input:focus {
   border-color: #0066cc;
 }
-

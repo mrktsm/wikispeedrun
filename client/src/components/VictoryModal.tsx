@@ -81,8 +81,8 @@ const VictoryModal = ({
     return `${mins}:${seconds.padStart(2, "0")}.${milliseconds.padEnd(2, "0")}`;
   };
 
-  const time = isMeSelected 
-    ? formatTime(finalTime) 
+  const time = isMeSelected
+    ? formatTime(finalTime)
     : formatTime(getFinishTimeStr(selectedPlayer?.finishTime));
 
   // Calculate time per click
@@ -97,25 +97,25 @@ const VictoryModal = ({
     } else if (selectedPlayer?.finishTime) {
       totalSeconds = selectedPlayer.finishTime / 1000;
     }
-    
+
     if (totalSeconds === 0) return "-";
     const avg = totalSeconds / clickCount;
     return `${avg.toFixed(1)}s`;
   };
 
   const maxVisiblePathRows = 10;
-  
+
   // Use segments for "me", and path for others
-  const currentPlayerPath = isMeSelected 
-    ? segments 
+  const currentPlayerPath = isMeSelected
+    ? segments
     : (selectedPlayer?.path || []).map(name => ({ name, time: "-", timeDiff: null }));
 
   const placeholders =
     currentPlayerPath.length < maxVisiblePathRows
       ? Array.from(
-          { length: maxVisiblePathRows - currentPlayerPath.length },
-          () => ({ name: "-", time: "-", timeDiff: null as string | null })
-        )
+        { length: maxVisiblePathRows - currentPlayerPath.length },
+        () => ({ name: "-", time: "-", timeDiff: null as string | null })
+      )
       : [];
   const displaySegments =
     currentPlayerPath.length < maxVisiblePathRows
@@ -125,7 +125,7 @@ const VictoryModal = ({
 
   return (
     <div className="victory-overlay" onClick={onNewRoute}>
-      <div className="victory-container" onClick={(e) => e.stopPropagation()}>
+      <div className="victory-banner-row" onClick={(e) => e.stopPropagation()}>
         <div className="victory-status-banner is-me">
           <div className="victory-status-left">
             <FaTrophy className="victory-status-icon" />
@@ -141,14 +141,17 @@ const VictoryModal = ({
             </span>
           </div>
         </div>
+      </div>
+
+      <div className="victory-container" onClick={(e) => e.stopPropagation()}>
 
         <div className="victory-left-column">
           <div className="victory-modal">
             {/* Header - route as title */}
             <div className="victory-header">
               <span className="victory-header-title">
-                {startArticle.replace(/_/g, " ")} to {endArticle.replace(/_/g, " ")} 
-                {isMeSelected ? <span className="me-label"> (You)</span> : <span className="me-label"> ({selectedPlayer?.name || 'Player'})</span>} 
+                {startArticle.replace(/_/g, " ")} to {endArticle.replace(/_/g, " ")}
+                {isMeSelected ? <span className="me-label"> (You)</span> : <span className="me-label"> ({selectedPlayer?.name || 'Player'})</span>}
               </span>
             </div>
 
@@ -184,9 +187,8 @@ const VictoryModal = ({
                       <span className="victory-path-times">
                         {seg.timeDiff && (
                           <span
-                            className={`victory-path-diff ${
-                              seg.timeDiff.startsWith("+") ? "behind" : "ahead"
-                            }`}
+                            className={`victory-path-diff ${seg.timeDiff.startsWith("+") ? "behind" : "ahead"
+                              }`}
                           >
                             {seg.timeDiff}
                           </span>
@@ -221,15 +223,15 @@ const VictoryModal = ({
 
         {/* Sidebar */}
         <div className="victory-sidebar">
-          <Scoreboard 
-            players={players} 
-            currentPlayerClicks={currentPlayerClicks} 
-            maxSlots={6} 
+          <Scoreboard
+            players={players}
+            currentPlayerClicks={currentPlayerClicks}
+            maxSlots={6}
             selectedPlayerId={selectedPlayerId}
             onSelectPlayer={setSelectedPlayerId}
             currentPlayerName={currentPlayerName}
           />
-          
+
           <div className="victory-chat">
             <div className="victory-chat-header scoreboard-header">
               <div className="scoreboard-title">
