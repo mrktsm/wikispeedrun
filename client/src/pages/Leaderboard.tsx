@@ -12,6 +12,7 @@ import { IoIosPerson } from "react-icons/io";
 import fightIcon from "../assets/fight-svgrepo-com(1).svg";
 import raceFlagIcon from "../assets/race-flag-svgrepo-com.svg";
 import wikipediaLogo from "../assets/wikipedia-logotype-of-earth-puzzle-svgrepo-com.svg";
+import ProfilePopover from "../components/ProfilePopover";
 import "./Leaderboard.css";
 
 // Wikipedia API helpers
@@ -23,14 +24,14 @@ const searchWikipediaArticles = async (
   try {
     const response = await fetch(
       `https://${language}.wikipedia.org/w/api.php?` +
-        new URLSearchParams({
-          action: "opensearch",
-          search: query,
-          limit: "8",
-          namespace: "0",
-          format: "json",
-          origin: "*",
-        })
+      new URLSearchParams({
+        action: "opensearch",
+        search: query,
+        limit: "8",
+        namespace: "0",
+        format: "json",
+        origin: "*",
+      })
     );
     const data = await response.json();
     return data[1] || [];
@@ -46,14 +47,14 @@ const getRandomWikipediaArticle = async (
   try {
     const response = await fetch(
       `https://${language}.wikipedia.org/w/api.php?` +
-        new URLSearchParams({
-          action: "query",
-          list: "random",
-          rnnamespace: "0",
-          rnlimit: "1",
-          format: "json",
-          origin: "*",
-        })
+      new URLSearchParams({
+        action: "query",
+        list: "random",
+        rnnamespace: "0",
+        rnlimit: "1",
+        format: "json",
+        origin: "*",
+      })
     );
     const data = await response.json();
     return data.query?.random?.[0]?.title || "Random Article";
@@ -382,13 +383,13 @@ const Leaderboard = () => {
             {/* Navigation Links */}
             <div className="leaderboard-nav-left">
               <div className="leaderboard-nav-links">
-                <div 
+                <div
                   className="play-dropdown-container"
                   ref={playButtonRef}
                   onMouseEnter={() => setShowPlayDropdown(true)}
                   onMouseLeave={() => setShowPlayDropdown(false)}
                 >
-                  <button 
+                  <button
                     className="leaderboard-nav-button"
                     onClick={() => navigate("/lobby-browser")}
                   >
@@ -396,7 +397,7 @@ const Leaderboard = () => {
                   </button>
                   {showPlayDropdown && (
                     <div className="play-dropdown-menu">
-                      <button 
+                      <button
                         className="play-dropdown-item"
                         onClick={() => {
                           navigate("/race-lobby");
@@ -405,7 +406,7 @@ const Leaderboard = () => {
                       >
                         Create lobby game
                       </button>
-                      <button 
+                      <button
                         className="play-dropdown-item"
                         onClick={() => {
                           navigate("/lobby-browser");
@@ -414,7 +415,7 @@ const Leaderboard = () => {
                       >
                         Quick game
                       </button>
-                      <button 
+                      <button
                         className="play-dropdown-item"
                         onClick={() => {
                           setShowSoloModal(true);
@@ -423,7 +424,7 @@ const Leaderboard = () => {
                       >
                         Solo
                       </button>
-                      <button 
+                      <button
                         className="play-dropdown-item"
                       >
                         Duel
@@ -571,9 +572,19 @@ const Leaderboard = () => {
                             alt={entry.country}
                             className="leaderboard-flag"
                           />
-                          <span className="leaderboard-username">
-                            {entry.username}
-                          </span>
+                          <ProfilePopover
+                            name={entry.username}
+                            country={entry.country}
+                            rating={1800 + entry.rank * 50}
+                            gamesPlayed={entry.gamesPlayed}
+                            bestTime={entry.bestTime}
+                            avgTime={entry.avgTime}
+                            winRate={entry.winRate}
+                          >
+                            <span className="leaderboard-username">
+                              {entry.username}
+                            </span>
+                          </ProfilePopover>
                         </div>
                       </td>
                       <td className="text-right">
@@ -642,28 +653,28 @@ const Leaderboard = () => {
                     <tr>
                       <td className="activity-entry">
                         <span className="activity-result win">W</span>
-                        <span className="activity-vs">vs LinkRunner</span>
+                        <span className="activity-vs">vs <ProfilePopover name="LinkRunner"><span className="activity-name">LinkRunner</span></ProfilePopover></span>
                       </td>
                       <td className="text-right activity-when">2m</td>
                     </tr>
                     <tr>
                       <td className="activity-entry">
                         <span className="activity-result loss">L</span>
-                        <span className="activity-vs">vs WikiMaster</span>
+                        <span className="activity-vs">vs <ProfilePopover name="WikiMaster"><span className="activity-name">WikiMaster</span></ProfilePopover></span>
                       </td>
                       <td className="text-right activity-when">15m</td>
                     </tr>
                     <tr>
                       <td className="activity-entry">
                         <span className="activity-result win">W</span>
-                        <span className="activity-vs">vs SpeedCrawler</span>
+                        <span className="activity-vs">vs <ProfilePopover name="SpeedCrawler"><span className="activity-name">SpeedCrawler</span></ProfilePopover></span>
                       </td>
                       <td className="text-right activity-when">1h</td>
                     </tr>
                     <tr>
                       <td className="activity-entry">
                         <span className="activity-result win">W</span>
-                        <span className="activity-vs">vs PathFinder</span>
+                        <span className="activity-vs">vs <ProfilePopover name="PathFinder"><span className="activity-name">PathFinder</span></ProfilePopover></span>
                       </td>
                       <td className="text-right activity-when">2h</td>
                     </tr>
@@ -767,9 +778,8 @@ const Leaderboard = () => {
                     )}
                   </div>
                   <button
-                    className={`solo-shuffle-btn ${
-                      isRandomizingStart ? "loading" : ""
-                    }`}
+                    className={`solo-shuffle-btn ${isRandomizingStart ? "loading" : ""
+                      }`}
                     onClick={handleRandomStart}
                     title="Random article"
                     disabled={isRandomizingStart}
@@ -843,9 +853,8 @@ const Leaderboard = () => {
                     )}
                   </div>
                   <button
-                    className={`solo-shuffle-btn ${
-                      isRandomizingEnd ? "loading" : ""
-                    }`}
+                    className={`solo-shuffle-btn ${isRandomizingEnd ? "loading" : ""
+                      }`}
                     onClick={handleRandomEnd}
                     title="Random article"
                     disabled={isRandomizingEnd}
@@ -901,9 +910,8 @@ const Leaderboard = () => {
               {/* Action Buttons */}
               <div className="solo-action-buttons">
                 <button
-                  className={`solo-play-btn ${
-                    startArticle && endArticle ? "active" : ""
-                  }`}
+                  className={`solo-play-btn ${startArticle && endArticle ? "active" : ""
+                    }`}
                   onClick={handlePlayNow}
                   disabled={!startArticle || !endArticle}
                 >

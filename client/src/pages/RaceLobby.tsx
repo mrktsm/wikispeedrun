@@ -5,6 +5,7 @@ import {
   useMultiplayer,
   type Player as MultiplayerPlayer,
 } from "../hooks/useMultiplayer";
+import ProfilePopover from "../components/ProfilePopover";
 import "./RaceLobby.css";
 
 interface ChatMessage {
@@ -22,9 +23,8 @@ function getOrCreatePlayerName(): string {
 
   const adjectives = ["Swift", "Quick", "Clever", "Wiki", "Speed", "Link"];
   const nouns = ["Runner", "Racer", "Master", "Hunter", "Crawler", "Finder"];
-  const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${
-    nouns[Math.floor(Math.random() * nouns.length)]
-  }${Math.floor(Math.random() * 100)}`;
+  const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]
+    }${Math.floor(Math.random() * 100)}`;
 
   sessionStorage.setItem("wiki-race-player-name", name);
   return name;
@@ -188,17 +188,17 @@ const RaceLobby = () => {
     serverPlayers.length > 0
       ? serverPlayers
       : [
-          {
-            id: "self",
-            name: playerName,
-            isHost: true,
-            isReady: true,
-            country: "US",
-            rating: 1650,
-            gamesPlayed: 0,
-            bestTime: "-",
-          },
-        ];
+        {
+          id: "self",
+          name: playerName,
+          isHost: true,
+          isReady: true,
+          country: "US",
+          rating: 1650,
+          gamesPlayed: 0,
+          bestTime: "-",
+        },
+      ];
 
   // Am I the host? (first player in the list)
   const isHost =
@@ -446,10 +446,18 @@ const RaceLobby = () => {
                               alt={player.country}
                               className="leaderboard-flag"
                             />
-                            <span className="leaderboard-username">
-                              {player.name}
-                              {player.name === playerName && " (You)"}
-                            </span>
+                            <ProfilePopover
+                              name={player.name}
+                              country={player.country}
+                              rating={player.rating}
+                              gamesPlayed={player.gamesPlayed}
+                              bestTime={player.bestTime}
+                            >
+                              <span className="leaderboard-username">
+                                {player.name}
+                                {player.name === playerName && " (You)"}
+                              </span>
+                            </ProfilePopover>
                           </div>
                         </td>
                         <td className="text-right">
