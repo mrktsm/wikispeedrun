@@ -10,6 +10,7 @@ import WikipediaViewer from "../components/WikipediaViewer";
 import VictoryModal, { type ChatMessage } from "../components/VictoryModal";
 import Scoreboard from "../components/Scoreboard";
 import SamePageNotification from "../components/SamePageNotification";
+import CountdownNotification from "../components/CountdownNotification";
 import { useMultiplayer, type Player, type CursorUpdate } from "../hooks/useMultiplayer";
 import "../App.css";
 import "./Game.css";
@@ -73,6 +74,28 @@ const Game = () => {
       return () => clearTimeout(timer);
     }
   }, [showSamePageNotification]);
+
+  // Countdown state
+  const [countdownSeconds, setCountdownSeconds] = useState(0);
+  const [showCountdown, setShowCountdown] = useState(false);
+
+  // Helper to start countdown test
+  const testCountdown = () => {
+    setCountdownSeconds(30);
+    setShowCountdown(true);
+    
+    // Simulate countdown
+    const interval = setInterval(() => {
+      setCountdownSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setShowCountdown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
   
   // Test toggle for menu
   const handleToggleMenu = () => {
@@ -1093,16 +1116,13 @@ const Game = () => {
         {/* Scoreboard */}
         {isMultiplayer && (
           <Scoreboard 
-            players={players.filter(p => {
-              // Filter out current player by ID if available, otherwise by name
-              if (currentPlayerIdRef.current) {
-                return p.id !== currentPlayerIdRef.current && !p.finished;
-              }
-              return p.name !== playerName && !p.finished;
-            })}
+            players={players.filter(p => !p.finished)}
             currentPlayerClicks={players.find(p => 
               currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
             )?.clicks || localClicks}
+            currentPlayerName={players.find(p => 
+              currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
+            )?.name || playerName || "You"}
           />
         )}
         {/* Finished players indicator */}
@@ -1112,7 +1132,7 @@ const Game = () => {
             {finishedPlayers.map((p, i) => (
               <div key={p.playerId} className="multiplayer-finish-row">
                 <span className="mp-finish-rank">#{i + 1}</span>
-                <span className="mp-finish-name">{p.playerName}</span>
+                <span className="mp-finish-name">{p.playerName} {p.playerName === playerName && <span className="me-label">(You)</span>}</span>
                 <span className="mp-finish-time">{(p.time / 1000).toFixed(2)}s</span>
               </div>
             ))}
@@ -1121,12 +1141,36 @@ const Game = () => {
         <SpeedrunWidget
           ref={speedrunWidgetRef}
           gameMode={isMultiplayer ? "Race" : "Single Player"}
-          startArticle={startArticle}
           endArticle={endArticle}
           isRunning={articleLoaded && hudVisible}
           isStopped={routeCompleted}
           isMultiplayer={isMultiplayer}
         />
+        <CountdownNotification 
+          secondsLeft={countdownSeconds}
+          visible={showCountdown} 
+        />
+        {/* Test button for countdown */}
+        <div 
+          style={{
+            position: 'fixed',
+            bottom: '60px',
+            right: '10px',
+            zIndex: 9999
+          }}
+        >
+          <button onClick={testCountdown}>Spawn Countdown</button>
+          <button 
+            onClick={() => {
+              setSamePagePlayerName("TestPlayer");
+              setSamePagePlayerColor("#00aaff");
+              setShowSamePageNotification(true);
+            }}
+            style={{ marginTop: '8px' }}
+          >
+            Spawn Same Page
+          </button>
+        </div>
       </div>
       {showVictoryModal && gameStats && (
         <VictoryModal
@@ -1134,9 +1178,22 @@ const Game = () => {
           segments={gameStats.segments}
           startArticle={startArticle}
           endArticle={endArticle}
-          players={mockPlayers.length > 0 ? mockPlayers : players}
+          players={mockPlayers.length > 0 ? mockPlayers : (
+            players.length > 0 ? players : [{
+              id: 'local-player',
+              name: playerName || "You",
+              currentArticle: currentArticle,
+              clicks: localClicks,
+              path: gameStats.segments.map(s => s.name),
+              finished: true,
+              finishTime: parseInt(gameStats.finalTime.split(':')[0]) * 60000 + parseFloat(gameStats.finalTime.split(':')[1]) * 1000
+            }]
+          )}
           messages={messages}
           currentPlayerClicks={localClicks}
+          currentPlayerName={mockPlayers.length > 0 ? (playerName || "SwiftRunner42") : (players.find(p => 
+            currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
+          )?.name || playerName || "You")}
           onPlayAgain={handlePlayAgain}
           onNewRoute={handleNewRoute}
           onSendMessage={(text: string) => {

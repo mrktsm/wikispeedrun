@@ -7,12 +7,17 @@ interface ScoreboardPlayer {
   linksClicked: number;
   isAhead: boolean | null; // true = ahead (green), false = behind (red), null = neutral
   colorIndex: number; // Index for color assignment
+  id: string; // Player ID
+  isMe?: boolean; // Whether this is the current player
 }
 
 interface ScoreboardProps {
   players: Player[];
   currentPlayerClicks: number;
   maxSlots?: number;
+  selectedPlayerId?: string | null;
+  onSelectPlayer?: (playerId: string) => void;
+  currentPlayerName?: string;
 }
 
 // Cursor colors matching Game.tsx - these are drastically different colors
@@ -39,7 +44,14 @@ const hashStringToIndex = (str: string): number => {
   return Math.abs(hash) % CURSOR_COLORS.length;
 };
 
-const Scoreboard = ({ players, currentPlayerClicks, maxSlots }: ScoreboardProps) => {
+const Scoreboard = ({ 
+  players, 
+  currentPlayerClicks, 
+  maxSlots,
+  selectedPlayerId,
+  onSelectPlayer,
+  currentPlayerName,
+}: ScoreboardProps) => {
   // Get color based on player name hash (matches cursor colors)
   const getPlayerColor = (name: string): string => {
     const index = hashStringToIndex(name);
@@ -71,6 +83,8 @@ const Scoreboard = ({ players, currentPlayerClicks, maxSlots }: ScoreboardProps)
       linksClicked: player.clicks,
       isAhead,
       colorIndex: 0,
+      id: player.id,
+      isMe: player.name === currentPlayerName || (player.id === 'local-player'),
     };
   });
 
@@ -84,6 +98,7 @@ const Scoreboard = ({ players, currentPlayerClicks, maxSlots }: ScoreboardProps)
         linksClicked: 0,
         isAhead: null,
         colorIndex: 0,
+        id: `empty-${paddedPlayers.length}`,
       });
     }
   }
@@ -104,12 +119,16 @@ const Scoreboard = ({ players, currentPlayerClicks, maxSlots }: ScoreboardProps)
 
       <div className="players-list">
         {paddedPlayers.map((player, index) => (
-          <div key={index} className="player-row">
+          <div 
+            key={index} 
+            className={`player-row ${onSelectPlayer ? 'clickable' : ''} ${selectedPlayerId === player.id ? 'active' : ''} ${player.isMe ? 'is-me' : ''}`}
+            onClick={() => player.username && onSelectPlayer?.(player.id)}
+          >
             <div 
               className="player-name"
               style={{ color: player.username ? getPlayerColor(player.username) : "transparent" }}
             >
-              {player.username || "-"}
+              {player.username || "-"} {player.isMe && <span className="me-label">(You)</span>}
             </div>
             <div className="player-stats">
               <span

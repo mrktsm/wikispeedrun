@@ -22,6 +22,7 @@ const mockPlayerData = {
   avgClicks: 33.3,
   bestTime: "23.4s",
   totalPlaytime: "24h 32m",
+  avgTimePerArticle: "12.8s",
   
   // Recent matches
   recentMatches: [
@@ -221,10 +222,14 @@ const Profile = () => {
                     <div className="profile-stat-sidebar-label">Best Time</div>
                     <div className="profile-stat-sidebar-value">{mockPlayerData.bestTime}</div>
                   </div>
-                </div>
-                <div className="profile-leaderboard-position">
-                  <div className="profile-leaderboard-label">Leaderboard Rank</div>
-                  <div className="profile-leaderboard-rank">#42</div>
+                  <div className="profile-stat-sidebar-item">
+                    <div className="profile-stat-sidebar-label">Articles Visited</div>
+                    <div className="profile-stat-sidebar-value">{mockPlayerData.totalClicks.toLocaleString()}</div>
+                  </div>
+                  <div className="profile-stat-sidebar-item">
+                    <div className="profile-stat-sidebar-label">Avg Time/Article</div>
+                    <div className="profile-stat-sidebar-value">{mockPlayerData.avgTimePerArticle}</div>
+                  </div>
                 </div>
               </div>
             </div>

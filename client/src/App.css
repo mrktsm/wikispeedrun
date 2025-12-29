@@ -50,3 +50,11 @@
   box-shadow: none;
 }
 
+
+.me-label {
+  font-size: 0.9em;
+  color: inherit;
+  margin-left: 5px;
+  opacity: 0.6;
+  font-weight: inherit;
+}

@@ -82,6 +82,8 @@ const Leaderboard = () => {
   const [autoScroll, setAutoScroll] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [sampleSize, setSampleSize] = useState(50);
+  const [showPlayDropdown, setShowPlayDropdown] = useState(false);
+  const playButtonRef = useRef<HTMLDivElement>(null);
 
   // Autocomplete state
   const [startSuggestions, setStartSuggestions] = useState<string[]>([]);
@@ -380,7 +382,55 @@ const Leaderboard = () => {
             {/* Navigation Links */}
             <div className="leaderboard-nav-left">
               <div className="leaderboard-nav-links">
-                <button className="leaderboard-nav-button">PLAY</button>
+                <div 
+                  className="play-dropdown-container"
+                  ref={playButtonRef}
+                  onMouseEnter={() => setShowPlayDropdown(true)}
+                  onMouseLeave={() => setShowPlayDropdown(false)}
+                >
+                  <button 
+                    className="leaderboard-nav-button"
+                    onClick={() => navigate("/lobby-browser")}
+                  >
+                    PLAY
+                  </button>
+                  {showPlayDropdown && (
+                    <div className="play-dropdown-menu">
+                      <button 
+                        className="play-dropdown-item"
+                        onClick={() => {
+                          navigate("/race-lobby");
+                          setShowPlayDropdown(false);
+                        }}
+                      >
+                        Create lobby game
+                      </button>
+                      <button 
+                        className="play-dropdown-item"
+                        onClick={() => {
+                          navigate("/lobby-browser");
+                          setShowPlayDropdown(false);
+                        }}
+                      >
+                        Quick game
+                      </button>
+                      <button 
+                        className="play-dropdown-item"
+                        onClick={() => {
+                          setShowSoloModal(true);
+                          setShowPlayDropdown(false);
+                        }}
+                      >
+                        Solo
+                      </button>
+                      <button 
+                        className="play-dropdown-item"
+                      >
+                        Duel
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <button className="leaderboard-nav-button active">
                   LEADERBOARD
                 </button>
@@ -442,22 +492,7 @@ const Leaderboard = () => {
                 </div>
               </div>
 
-              <div
-                className="game-button middle"
-                onClick={() => setShowSoloModal(true)}
-              >
-                <div className="game-button-icon game-button-icon-small">
-                  <IoIosPerson className="game-button-icon-svg" />
-                </div>
-                <div className="game-button-info">
-                  <div className="game-button-title">Solo</div>
-                  <div className="game-button-meta">
-                    Race against the clock solo
-                  </div>
-                </div>
-              </div>
-
-              <div className="game-button last">
+              <div className="game-button middle">
                 <div className="game-button-icon game-button-icon-large">
                   <img
                     src={fightIcon}
@@ -468,6 +503,21 @@ const Leaderboard = () => {
                 <div className="game-button-info">
                   <div className="game-button-title">Duel</div>
                   <div className="game-button-meta">Head-to-head challenge</div>
+                </div>
+              </div>
+
+              <div
+                className="game-button last"
+                onClick={() => setShowSoloModal(true)}
+              >
+                <div className="game-button-icon game-button-icon-small">
+                  <IoIosPerson className="game-button-icon-svg" />
+                </div>
+                <div className="game-button-info">
+                  <div className="game-button-title">Solo</div>
+                  <div className="game-button-meta">
+                    Race against the clock solo
+                  </div>
                 </div>
               </div>
             </div>

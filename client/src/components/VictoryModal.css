@@ -27,6 +27,7 @@
   align-items: stretch;
   max-width: 1100px;
   width: auto;
+  position: relative;
   animation: victory-appear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -58,13 +59,51 @@
   margin-bottom: 24px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  width: 100%;
   color: #99cc33; /* Softened lime green */
   font-weight: 700;
   font-size: 24px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   letter-spacing: 0.2px;
   white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.victory-status-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.victory-status-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #888;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.victory-status-meta {
+  display: flex;
+  align-items: center;
+}
+
+.victory-meta-value {
+  color: #fff;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.victory-status-separator {
+  color: #333;
+}
+
+.victory-status-banner.is-me {
+  color: #99cc33; /* Original green for "You Won" */
 }
 
 .victory-status-icon {
@@ -163,6 +202,9 @@
 }
 
 .victory-path-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   padding: 8px 10px 6px;
   font-size: 11px;
   font-weight: 700;

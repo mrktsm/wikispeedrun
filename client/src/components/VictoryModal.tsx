@@ -29,6 +29,7 @@ interface VictoryModalProps {
   onPlayAgain: () => void;
   onNewRoute: () => void;
   onSendMessage: (text: string) => void;
+  currentPlayerName: string;
 }
 
 const VictoryModal = ({
@@ -42,9 +43,16 @@ const VictoryModal = ({
   onPlayAgain,
   onNewRoute,
   onSendMessage,
+  currentPlayerName,
 }: VictoryModalProps) => {
   const [chatInput, setChatInput] = useState("");
-  const clickCount = segments.length;
+  const initialPlayerId = players.find(p => p.name === currentPlayerName)?.id || players[0]?.id || null;
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(initialPlayerId);
+
+  const selectedPlayer = players.find(p => p.id === selectedPlayerId);
+  const isMeSelected = selectedPlayer?.name === currentPlayerName;
+
+  const clickCount = isMeSelected ? segments.length : (selectedPlayer?.clicks || 0);
 
   const handleSendChat = () => {
     if (!chatInput.trim()) return;
@@ -53,56 +61,94 @@ const VictoryModal = ({
   };
 
   // Format time for display
-  const formatTime = () => {
-    const parts = finalTime.split(":");
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return { main: "--:--", centis: "" };
+    const parts = timeStr.split(":");
     if (parts.length === 2) {
       const mins = parts[0].padStart(2, "0");
       const rest = parts[1];
       return { main: `${mins}:${rest.slice(0, 2)}`, centis: rest.slice(3) };
     }
-    return { main: finalTime, centis: "" };
+    return { main: timeStr, centis: "" };
   };
+
+  const getFinishTimeStr = (finishTimeMs: number | undefined) => {
+    if (!finishTimeMs) return "--:--.--";
+    const totalSeconds = finishTimeMs / 1000;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = (totalSeconds % 60).toFixed(2);
+    const [seconds, milliseconds] = secs.split('.');
+    return `${mins}:${seconds.padStart(2, "0")}.${milliseconds.padEnd(2, "0")}`;
+  };
+
+  const time = isMeSelected 
+    ? formatTime(finalTime) 
+    : formatTime(getFinishTimeStr(selectedPlayer?.finishTime));
 
   // Calculate time per click
   const getTimePerClick = () => {
     if (clickCount === 0) return "-";
-    const parts = finalTime.split(":");
     let totalSeconds = 0;
-    if (parts.length === 2) {
-      totalSeconds = parseInt(parts[0]) * 60 + parseFloat(parts[1]);
+    if (isMeSelected) {
+      const parts = finalTime.split(":");
+      if (parts.length === 2) {
+        totalSeconds = parseInt(parts[0]) * 60 + parseFloat(parts[1]);
+      }
+    } else if (selectedPlayer?.finishTime) {
+      totalSeconds = selectedPlayer.finishTime / 1000;
     }
+    
+    if (totalSeconds === 0) return "-";
     const avg = totalSeconds / clickCount;
     return `${avg.toFixed(1)}s`;
   };
 
-  const time = formatTime();
   const maxVisiblePathRows = 10;
+  
+  // Use segments for "me", and path for others
+  const currentPlayerPath = isMeSelected 
+    ? segments 
+    : (selectedPlayer?.path || []).map(name => ({ name, time: "-", timeDiff: null }));
+
   const placeholders =
-    segments.length < maxVisiblePathRows
+    currentPlayerPath.length < maxVisiblePathRows
       ? Array.from(
-          { length: maxVisiblePathRows - segments.length },
+          { length: maxVisiblePathRows - currentPlayerPath.length },
           () => ({ name: "-", time: "-", timeDiff: null as string | null })
         )
       : [];
   const displaySegments =
-    segments.length < maxVisiblePathRows
-      ? [...segments, ...placeholders]
-      : segments;
+    currentPlayerPath.length < maxVisiblePathRows
+      ? [...currentPlayerPath, ...placeholders]
+      : currentPlayerPath;
+
 
   return (
     <div className="victory-overlay" onClick={onNewRoute}>
       <div className="victory-container" onClick={(e) => e.stopPropagation()}>
-        <div className="victory-left-column">
-          <div className="victory-status-banner">
+        <div className="victory-status-banner is-me">
+          <div className="victory-status-left">
             <FaTrophy className="victory-status-icon" />
             <span className="victory-status-text">You Won This Match!</span>
           </div>
-          
+          <div className="victory-status-right">
+            <span className="victory-status-meta">
+              {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+            <span className="victory-status-separator">|</span>
+            <span className="victory-status-meta">
+              Best Possible: <span className="victory-meta-value">1:02.45</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="victory-left-column">
           <div className="victory-modal">
             {/* Header - route as title */}
             <div className="victory-header">
               <span className="victory-header-title">
-                {startArticle.replace(/_/g, " ")} to {endArticle.replace(/_/g, " ")}
+                {startArticle.replace(/_/g, " ")} to {endArticle.replace(/_/g, " ")} 
+                {isMeSelected ? <span className="me-label"> (You)</span> : <span className="me-label"> ({selectedPlayer?.name || 'Player'})</span>} 
               </span>
             </div>
 
@@ -119,16 +165,18 @@ const VictoryModal = ({
                   <div className="victory-stat-name">Per Click</div>
                 </div>
                 <div className="victory-stat-box">
-                  <div className="victory-stat-number">{segments.length > 0 ? segments.length + 1 : 1}</div>
+                  <div className="victory-stat-number">{isMeSelected ? (segments.length > 0 ? segments.length + 1 : 1) : (selectedPlayer?.path.length || 0)}</div>
                   <div className="victory-stat-name">Articles</div>
                 </div>
               </div>
             </div>
 
             {/* Path taken */}
-            {segments.length > 0 && (
+            {currentPlayerPath.length > 0 && (
               <div className="victory-path-section">
-                <div className="victory-path-header">PATH TAKEN</div>
+                <div className="victory-path-header">
+                  {isMeSelected ? 'YOUR PATH' : `${selectedPlayer?.name?.toUpperCase() || 'PLAYER'}'S PATH`}
+                </div>
                 <div className="victory-path-list">
                   {displaySegments.map((seg, index) => (
                     <div key={index} className="victory-path-item">
@@ -173,7 +221,14 @@ const VictoryModal = ({
 
         {/* Sidebar */}
         <div className="victory-sidebar">
-          <Scoreboard players={players} currentPlayerClicks={currentPlayerClicks} maxSlots={6} />
+          <Scoreboard 
+            players={players} 
+            currentPlayerClicks={currentPlayerClicks} 
+            maxSlots={6} 
+            selectedPlayerId={selectedPlayerId}
+            onSelectPlayer={setSelectedPlayerId}
+            currentPlayerName={currentPlayerName}
+          />
           
           <div className="victory-chat">
             <div className="victory-chat-header scoreboard-header">
