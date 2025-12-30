@@ -9,7 +9,7 @@ import type {
 import WikipediaViewer from "../components/WikipediaViewer";
 import VictoryModal, { type ChatMessage } from "../components/VictoryModal";
 import Scoreboard from "../components/Scoreboard";
-import SamePageNotification from "../components/SamePageNotification";
+import GameNotification, { type NotificationType } from "../components/GameNotification";
 import CountdownNotification from "../components/CountdownNotification";
 import { useMultiplayer, type Player, type CursorUpdate } from "../hooks/useMultiplayer";
 import "../App.css";
@@ -47,9 +47,10 @@ const Game = () => {
   const [raceStartTime] = useState(() => Date.now());
   const [currentArticle, setCurrentArticle] = useState("");
   const [localClicks, setLocalClicks] = useState(0);
-  const [showSamePageNotification, setShowSamePageNotification] = useState(false);
-  const [samePagePlayerName, setSamePagePlayerName] = useState("");
-  const [samePagePlayerColor, setSamePagePlayerColor] = useState("");
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationType, setNotificationType] = useState<NotificationType>("same-page");
+  const [notificationPlayerName, setNotificationPlayerName] = useState("");
+  const [notificationPlayerColor, setNotificationPlayerColor] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [mockPlayers, setMockPlayers] = useState<Player[]>([]);
 
@@ -63,18 +64,18 @@ const Game = () => {
   // Reset notification state after it finishes showing
   // This allows the notification to be triggered again
   useEffect(() => {
-    if (showSamePageNotification) {
+    if (showNotification) {
       const timer = setTimeout(() => {
-        setShowSamePageNotification(false);
+        setShowNotification(false);
         // Clear player name/color after a brief delay to allow new notification
         setTimeout(() => {
-          setSamePagePlayerName("");
-          setSamePagePlayerColor("");
+          setNotificationPlayerName("");
+          setNotificationPlayerColor("");
         }, 100);
       }, 3000); // Match the notification component's duration
       return () => clearTimeout(timer);
     }
-  }, [showSamePageNotification]);
+  }, [showNotification]);
 
   // Countdown state
   const [countdownSeconds, setCountdownSeconds] = useState(0);
@@ -162,6 +163,16 @@ const Game = () => {
       if (prev.some(p => p.playerId === data.playerId)) return prev;
       return [...prev, data];
     });
+
+    // Show finish notification
+    const playerColor = CURSOR_COLORS[hashStringToIndex(data.playerName)];
+    setShowNotification(false);
+    setTimeout(() => {
+      setNotificationPlayerName(data.playerName);
+      setNotificationPlayerColor(playerColor);
+      setNotificationType("finish");
+      setShowNotification(true);
+    }, 50);
   }, []);
 
   // Cache icon HTML to avoid re-rendering
@@ -631,11 +642,12 @@ const Game = () => {
 
             // Show the notification
             const playerColor = CURSOR_COLORS[hashStringToIndex(playerName)];
-            setShowSamePageNotification(false);
+            setShowNotification(false);
             setTimeout(() => {
-              setSamePagePlayerName(playerName);
-              setSamePagePlayerColor(playerColor);
-              setShowSamePageNotification(true);
+              setNotificationPlayerName(playerName);
+              setNotificationPlayerColor(playerColor);
+              setNotificationType("same-page");
+              setShowNotification(true);
             }, 50);
           }
         }
@@ -699,11 +711,12 @@ const Game = () => {
 
         // Show the notification
         const playerColor = CURSOR_COLORS[hashStringToIndex(player.name)];
-        setShowSamePageNotification(false);
+        setShowNotification(false);
         setTimeout(() => {
-          setSamePagePlayerName(player.name);
-          setSamePagePlayerColor(playerColor);
-          setShowSamePageNotification(true);
+          setNotificationPlayerName(player.name);
+          setNotificationPlayerColor(playerColor);
+          setNotificationType("same-page");
+          setShowNotification(true);
         }, 50);
 
         // Only show one notification at a time
@@ -1199,13 +1212,25 @@ const Game = () => {
           <button onClick={testCountdown}>Spawn Countdown</button>
           <button
             onClick={() => {
-              setSamePagePlayerName("TestPlayer");
-              setSamePagePlayerColor("#00aaff");
-              setShowSamePageNotification(true);
+              setNotificationPlayerName("TestPlayer");
+              setNotificationPlayerColor("#00aaff");
+              setNotificationType("same-page");
+              setShowNotification(true);
             }}
-            style={{ marginTop: '8px' }}
+            style={{ marginTop: '4px' }}
           >
-            Spawn Same Page
+            Test Same Page
+          </button>
+          <button
+            onClick={() => {
+              setNotificationPlayerName("WinnerPlayer");
+              setNotificationPlayerColor("#ffaa00");
+              setNotificationType("finish");
+              setShowNotification(true);
+            }}
+            style={{ marginTop: '4px' }}
+          >
+            Test Target Reached
           </button>
         </div>
       </div>
@@ -1244,11 +1269,11 @@ const Game = () => {
           }}
         />
       )}
-      {/* Same page notification */}
-      <SamePageNotification
-        playerName={samePagePlayerName}
-        playerColor={samePagePlayerColor}
-        visible={showSamePageNotification}
+      <GameNotification
+        playerName={notificationPlayerName}
+        playerColor={notificationPlayerColor}
+        type={notificationType}
+        visible={showNotification}
       />
 
       {/* Test button to toggle menu */}

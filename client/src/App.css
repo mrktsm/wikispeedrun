@@ -46,15 +46,16 @@
 .page-transition:not(.exiting):not(.entering):not(.exiting-back):not(.entering-back) {
   position: relative;
   z-index: 1;
-  transform: none; /* Clear transform to restore fixed positioning */
+  transform: none;
+  /* Clear transform to restore fixed positioning */
   box-shadow: none;
 }
 
 
 .me-label {
   font-size: 0.9em;
-  color: inherit;
+  color: #fff;
   margin-left: 5px;
-  opacity: 0.6;
+  opacity: 1;
   font-weight: inherit;
 }
