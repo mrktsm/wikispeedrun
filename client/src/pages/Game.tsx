@@ -52,13 +52,14 @@ const Game = () => {
   const [samePagePlayerColor, setSamePagePlayerColor] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [mockPlayers, setMockPlayers] = useState<Player[]>([]);
-  
-  // Simple notification tracking: Map of playerId -> last article where we showed notification
-  const lastNotificationArticleRef = useRef<Map<string, string>>(new Map());
-  
+
+  // Notification tracking: Map of playerId -> Set of articles where we already met them
+  // This tracks the actual "meeting location" so we don't re-notify for the same meeting
+  const seenMeetingsRef = useRef<Map<string, Set<string>>>(new Map());
+
   // Track current article in ref for use in callbacks
   const currentArticleRef = useRef<string>("");
-  
+
   // Reset notification state after it finishes showing
   // This allows the notification to be triggered again
   useEffect(() => {
@@ -83,7 +84,7 @@ const Game = () => {
   const testCountdown = () => {
     setCountdownSeconds(30);
     setShowCountdown(true);
-    
+
     // Simulate countdown
     const interval = setInterval(() => {
       setCountdownSeconds(prev => {
@@ -96,7 +97,7 @@ const Game = () => {
       });
     }, 1000);
   };
-  
+
   // Test toggle for menu
   const handleToggleMenu = () => {
     if (!showVictoryModal) {
@@ -111,7 +112,7 @@ const Game = () => {
           ]
         });
       }
-      
+
       // Add some mock players if testing
       if (mockPlayers.length === 0) {
         setMockPlayers([
@@ -121,7 +122,7 @@ const Game = () => {
           { id: 'p4', name: 'LinkHunter', currentArticle: 'Cat', clicks: 1, path: ['Cat'], finished: false },
         ]);
       }
-      
+
       // Add some mock messages if testing
       if (messages.length === 0) {
         setMessages([
@@ -130,7 +131,7 @@ const Game = () => {
           { id: '3', type: 'chat', playerName: 'WikiMaster', text: 'That Dog article was tricky.', timestamp: new Date() },
         ]);
       }
-      
+
       setShowVictoryModal(true);
     } else {
       setShowVictoryModal(false);
@@ -142,12 +143,12 @@ const Game = () => {
   const cursorContainerRef = useRef<HTMLDivElement>(null);
   const playersRef = useRef<Player[]>([]); // Store players for use in callbacks
   const highlightedElementsRef = useRef<Map<string, HTMLElement>>(new Map()); // Track highlighted elements by player ID
-  
+
   const speedrunWidgetRef = useRef<SpeedrunWidgetRef>(null);
   const hasFinishedRef = useRef(false);
   const lastCursorSendRef = useRef(0);
   const navigate = useNavigate();
-  
+
   const startArticle = searchParams.get("start") || "React_(JavaScript_library)";
   const endArticle = searchParams.get("end") || "End Article";
   const gameMode = searchParams.get("mode") || "solo";
@@ -189,10 +190,10 @@ const Game = () => {
           cachedHandIconHTML = iconElement.outerHTML;
         }
       }
-      
+
       if ((!cachedPointerIconHTML && pointerIconCacheRef.current) ||
-          (!cachedTextIconHTML && textIconCacheRef.current) ||
-          (!cachedHandIconHTML && handIconCacheRef.current)) {
+        (!cachedTextIconHTML && textIconCacheRef.current) ||
+        (!cachedHandIconHTML && handIconCacheRef.current)) {
         setTimeout(cacheIcons, 50);
       }
     };
@@ -222,19 +223,19 @@ const Game = () => {
     }
     return Math.abs(hash) % CURSOR_COLORS.length;
   };
-  
+
   // Find surrounding anchors (heading above and heading below) for section interpolation
   // This solves the "vertical stretching" issue where sections have different heights on different screens
-  const findSurroundingAnchors = (cursorY: number): { 
-    anchorId: string | null; 
-    nextAnchorId: string | null; 
+  const findSurroundingAnchors = (cursorY: number): {
+    anchorId: string | null;
+    nextAnchorId: string | null;
     sectionRatio: number;
   } => {
     const articleContainer = document.querySelector('.wikipedia-viewer');
     if (!articleContainer) {
       return { anchorId: null, nextAnchorId: null, sectionRatio: 0 };
     }
-    
+
     // Get all headings and sort them by top position
     // Use getRelativeTop for consistency with resolveSectionPosition
     const headings = Array.from(document.querySelectorAll('.wiki-content h2, .wiki-content h3, .wiki-content h4'))
@@ -246,40 +247,40 @@ const Game = () => {
       })
       .filter(h => h.anchorId) // Filter out headings without IDs
       .sort((a, b) => a.top - b.top);
-      
+
     // Find the interval containing the cursor
     // [prev] ... cursor ... [next]
     let prevIndex = -1;
-    
+
     for (let i = 0; i < headings.length; i++) {
-        if (headings[i].top <= cursorY) {
-            prevIndex = i;
-        } else {
-            break; // Found the first heading below cursor
-        }
+      if (headings[i].top <= cursorY) {
+        prevIndex = i;
+      } else {
+        break; // Found the first heading below cursor
+      }
     }
-    
+
     // Calculate boundaries of the current section
     const prev = prevIndex >= 0 ? headings[prevIndex] : null;
     const next = prevIndex + 1 < headings.length ? headings[prevIndex + 1] : null;
-    
+
     const articleBottom = (articleContainer as HTMLElement).offsetHeight;
-    
+
     // Define the Y range of this section
     const sectionTop = prev ? prev.top : 0; // Top of article if no prev anchor
     const sectionBottom = next ? next.top : articleBottom; // Bottom of article if no next anchor
     const sectionHeight = sectionBottom - sectionTop;
-    
+
     // Avoid division by zero
     const sectionRatio = sectionHeight > 0 ? (cursorY - sectionTop) / sectionHeight : 0;
-    
+
     return {
-        anchorId: prev?.anchorId || null,
-        nextAnchorId: next?.anchorId || null,
-        sectionRatio: Math.max(0, Math.min(1, sectionRatio)) // Clamp 0-1
+      anchorId: prev?.anchorId || null,
+      nextAnchorId: next?.anchorId || null,
+      sectionRatio: Math.max(0, Math.min(1, sectionRatio)) // Clamp 0-1
     };
   };
-  
+
   // Resolve interpolated position from section anchors
   // Helper to get element top relative to container safely
   const getRelativeTop = (element: HTMLElement, container: Element): number => {
@@ -293,84 +294,84 @@ const Game = () => {
   };
 
   const resolveSectionPosition = (
-    anchorId: string | null, 
-    nextAnchorId: string | null, 
-    sectionRatio: number, 
-    fallbackQy: number, 
+    anchorId: string | null,
+    nextAnchorId: string | null,
+    sectionRatio: number,
+    fallbackQy: number,
     articleContainer: Element
   ): number => {
     // Helper to get heading top relative to article using layout offset
     // This is much more stable than getBoundingClientRect regarding scroll/sticky headers
     const getHeadingTop = (id: string, container: Element): number | null => {
-        // Try exact ID match first
-        let anchor = document.getElementById(id);
-        
-        // If not found, try finding by mw-headline span with matching ID
-        if (!anchor) {
-          const headlineSpan = container.querySelector(`.mw-headline[id="${id}"]`);
-          if (headlineSpan) {
-            anchor = headlineSpan as HTMLElement;
+      // Try exact ID match first
+      let anchor = document.getElementById(id);
+
+      // If not found, try finding by mw-headline span with matching ID
+      if (!anchor) {
+        const headlineSpan = container.querySelector(`.mw-headline[id="${id}"]`);
+        if (headlineSpan) {
+          anchor = headlineSpan as HTMLElement;
+        }
+      }
+
+      // If still not found, try case-insensitive search (some IDs may have different casing)
+      if (!anchor) {
+        const allHeadings = container.querySelectorAll('.wiki-content h2, .wiki-content h3, .wiki-content h4');
+        for (const heading of allHeadings) {
+          const headlineSpan = heading.querySelector('.mw-headline');
+          const headingId = headlineSpan?.id || (heading as HTMLElement).id;
+          if (headingId && headingId.toLowerCase() === id.toLowerCase()) {
+            anchor = (headlineSpan || heading) as HTMLElement;
+            break;
           }
         }
-        
-        // If still not found, try case-insensitive search (some IDs may have different casing)
-        if (!anchor) {
-          const allHeadings = container.querySelectorAll('.wiki-content h2, .wiki-content h3, .wiki-content h4');
-          for (const heading of allHeadings) {
-            const headlineSpan = heading.querySelector('.mw-headline');
-            const headingId = headlineSpan?.id || (heading as HTMLElement).id;
-            if (headingId && headingId.toLowerCase() === id.toLowerCase()) {
-              anchor = (headlineSpan || heading) as HTMLElement;
-              break;
-            }
-          }
-        }
-        
-        if (!anchor) {
-          console.warn(`[Cursor] Heading anchor not found: ${id}`);
-          return null;
-        }
-        
-        const heading = anchor.closest('h2, h3, h4') || anchor;
-        return getRelativeTop(heading as HTMLElement, container);
+      }
+
+      if (!anchor) {
+        console.warn(`[Cursor] Heading anchor not found: ${id}`);
+        return null;
+      }
+
+      const heading = anchor.closest('h2, h3, h4') || anchor;
+      return getRelativeTop(heading as HTMLElement, container);
     };
-    
+
     // Use offsetHeight for stable layout height
     const articleBottom = (articleContainer as HTMLElement).offsetHeight;
-    
+
     const startTop = anchorId ? getHeadingTop(anchorId, articleContainer) : 0;
     const endTop = nextAnchorId ? getHeadingTop(nextAnchorId, articleContainer) : articleBottom;
-    
+
     // PRIORITY 1: Both anchors found - use precise interpolation
     if (startTop !== null && endTop !== null) {
-        return startTop + (endTop - startTop) * sectionRatio;
+      return startTop + (endTop - startTop) * sectionRatio;
     }
-    
+
     // PRIORITY 2: Start anchor found but end is missing - interpolate to article bottom
     if (startTop !== null && endTop === null) {
-        console.warn(`[Cursor] Using partial section positioning (start anchor found, end missing)`);
-        return startTop + (articleBottom - startTop) * sectionRatio;
+      console.warn(`[Cursor] Using partial section positioning (start anchor found, end missing)`);
+      return startTop + (articleBottom - startTop) * sectionRatio;
     }
-    
+
     // PRIORITY 3: End anchor found but start is missing - interpolate from article top
     if (startTop === null && endTop !== null) {
-        console.warn(`[Cursor] Using partial section positioning (end anchor found, start missing)`);
-        return endTop * sectionRatio;
+      console.warn(`[Cursor] Using partial section positioning (end anchor found, start missing)`);
+      return endTop * sectionRatio;
     }
-    
+
     // PRIORITY 4: No anchors found - use percentage fallback (least accurate)
     console.warn(`[Cursor] Using percentage fallback positioning (no anchors found)`);
     return fallbackQy * articleBottom;
   };
-  
 
-  
+
+
   // Handle cursor updates from other players - direct DOM manipulation (no re-render)
   const handleCursorUpdate = useCallback((data: CursorUpdate) => {
     // Only process cursor updates if the player is on the same page as the current player
     // Use ref to avoid stale closure issues
     const isOnSamePage = data.article === currentArticleRef.current;
-    
+
     // If not on the same page, hide/remove the cursor if it exists
     if (!isOnSamePage) {
       const container = cursorContainerRef.current;
@@ -382,24 +383,24 @@ const Game = () => {
       }
       return;
     }
-    
+
     cursorDataRef.current.set(data.playerId, data);
-    
+
     // Direct DOM update - bypasses React for performance
     const container = cursorContainerRef.current;
     if (!container) return;
-    
+
     let cursorEl = container.querySelector(`[data-player-id="${data.playerId}"]`) as HTMLElement;
-    
+
     // Create cursor element if it doesn't exist
     if (!cursorEl) {
       cursorEl = document.createElement('div');
       cursorEl.className = 'other-player-cursor';
       cursorEl.setAttribute('data-player-id', data.playerId);
-      
+
       // Get color based on player name hash (consistent across all components)
       const color = CURSOR_COLORS[hashStringToIndex(data.playerName)];
-      
+
       // Use default pointer icon initially
       const iconHTML = cachedPointerIconHTML || '';
       cursorEl.innerHTML = `
@@ -408,10 +409,10 @@ const Game = () => {
         </div>
         <span class="cursor-name">${data.playerName}</span>
       `;
-      
+
       // Store color on element for later use
       cursorEl.setAttribute('data-player-color', color);
-      
+
       // Apply color to cursor and name
       const cursorPointer = cursorEl.querySelector('.cursor-pointer') as HTMLElement;
       const cursorName = cursorEl.querySelector('.cursor-name') as HTMLElement;
@@ -430,15 +431,15 @@ const Game = () => {
       if (cursorName) {
         cursorName.style.background = color;
       }
-      
+
       container.appendChild(cursorEl);
     } else {
       // Show cursor if it was previously hidden
       cursorEl.style.display = '';
     }
-    
+
     // Note: Same-page notifications are handled separately via player updates
-    
+
     // Store article-relative coordinates on the element for RAF updates
     cursorEl.setAttribute('data-x', String(data.x));
     cursorEl.setAttribute('data-y', String(data.y));
@@ -446,38 +447,38 @@ const Game = () => {
     cursorEl.setAttribute('data-anchor-id', data.anchorId || '');
     cursorEl.setAttribute('data-next-anchor-id', data.nextAnchorId || '');
     cursorEl.setAttribute('data-section-ratio', String(data.sectionRatio || 0));
-    
+
     // Calculate screen position from article-relative coordinates
     const articleContainer = document.querySelector('.wikipedia-viewer');
     if (!articleContainer) return;
     const articleRect = articleContainer.getBoundingClientRect();
-    
+
     // Convert article-relative to screen position
     // (Actual rendering is handled by the RAF loop in updateAllCursorPositions)
     // const screenX = articleRect.left + data.x;
     // const screenY = articleRect.top + data.y;
-    
+
     // Position cursor at screen position (using fixed positioning)
     // cursorEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
-    
+
     // Highlight links hovered by other players
     const articleWidth = (articleContainer as HTMLElement).offsetWidth;
     const rx = data.x * articleWidth;
     const ry = resolveSectionPosition(
-      data.anchorId || null, 
-      data.nextAnchorId || null, 
-      data.sectionRatio || 0, 
-      data.y, 
+      data.anchorId || null,
+      data.nextAnchorId || null,
+      data.sectionRatio || 0,
+      data.y,
       articleContainer
     );
-    
+
     const screenX = articleRect.left + rx;
     const screenY = articleRect.top + ry;
-    
+
     // Check for element at position
     const element = document.elementFromPoint(screenX, screenY);
     let targetLink: HTMLElement | null = null;
-    
+
     if (element) {
       if (element.tagName === 'A') {
         targetLink = element as HTMLElement;
@@ -485,14 +486,14 @@ const Game = () => {
         targetLink = element.closest('a') as HTMLElement;
       }
     }
-    
+
     const prevHighlight = highlightedElementsRef.current.get(data.playerId);
     // Remove previous highlight if it's different or if we're not over a link anymore
     if (prevHighlight && prevHighlight !== targetLink) {
       prevHighlight.classList.remove('remote-hover');
       highlightedElementsRef.current.delete(data.playerId);
     }
-    
+
     // Apply new highlight
     if (targetLink && targetLink !== prevHighlight) {
       targetLink.classList.add('remote-hover');
@@ -502,14 +503,14 @@ const Game = () => {
     // Use cursorType from server if available (most accurate as it's from sender's side)
     // Fallback to local hit-testing only if server didn't provide it
     let cursorType = data.cursorType || 'pointer';
-    
+
     if (!data.cursorType) {
       // Reuse calculated position for fallback hit-testing
       if (element) {
         const target = element as HTMLElement;
         const computedStyle = window.getComputedStyle(target);
         const cursor = computedStyle.cursor;
-        
+
         if (target.tagName === 'A' || target.closest('a')) {
           cursorType = 'hand';
         } else if (target.tagName === 'IMG' || target.closest('img')) {
@@ -534,10 +535,10 @@ const Game = () => {
         }
       }
     }
-    
+
     // Update icon based on cursor type - always update to ensure it's correct
     const previousCursorType = cursorEl.getAttribute('data-cursor-type');
-    
+
     // Always update if type changed, or if we don't have an icon yet
     if (previousCursorType !== cursorType || !cursorEl.querySelector('.cursor-pointer')?.innerHTML.trim()) {
       let iconHTML: string | null = null;
@@ -548,12 +549,12 @@ const Game = () => {
       } else if (cachedPointerIconHTML) {
         iconHTML = cachedPointerIconHTML;
       }
-      
+
       if (iconHTML) {
         const cursorPointerDiv = cursorEl.querySelector('.cursor-pointer') as HTMLElement;
         if (cursorPointerDiv) {
           cursorPointerDiv.innerHTML = iconHTML;
-          
+
           // Reapply player color after icon update
           const storedColor = cursorEl.getAttribute('data-player-color');
           if (storedColor) {
@@ -570,10 +571,10 @@ const Game = () => {
           }
         }
       }
-      
+
       cursorEl.setAttribute('data-cursor-type', cursorType);
     }
-    
+
     // Apply cursor type styling via classes
     cursorEl.classList.remove('cursor-pointer-type', 'cursor-text-type', 'cursor-hand-type');
     if (cursorType === 'pointer') {
@@ -587,10 +588,10 @@ const Game = () => {
 
   // Track current player ID for syncing clicks
   const currentPlayerIdRef = useRef<string | null>(null);
-  
+
   // Track player names by ID for notifications
   const playerNamesRef = useRef<Map<string, string>>(new Map());
-  
+
   // Initialize multiplayer if needed
   const {
     isConnected,
@@ -608,21 +609,50 @@ const Game = () => {
       // Sync local clicks with server when our own player is updated
       if (data.playerId === currentPlayerIdRef.current) {
         setLocalClicks(data.clicks);
+        return;
       }
-      // Note: Notifications are handled by dedicated useEffect watching players array
+
+      // Check if another player just arrived at our current article
+      const myArticle = currentArticleRef.current;
+      if (myArticle && myArticle !== startArticle && data.currentArticle === myArticle) {
+        // Get the player's name from the ref (since players state might not be updated yet)
+        const playerName = playerNamesRef.current.get(data.playerId);
+        if (playerName) {
+          // Check if we've already met this player at this article
+          let meetingLocations = seenMeetingsRef.current.get(data.playerId);
+          if (!meetingLocations) {
+            meetingLocations = new Set<string>();
+            seenMeetingsRef.current.set(data.playerId, meetingLocations);
+          }
+
+          if (!meetingLocations.has(myArticle)) {
+            console.log(`[Notification via onPlayerUpdate] ${playerName} arrived at ${myArticle}`);
+            meetingLocations.add(myArticle);
+
+            // Show the notification
+            const playerColor = CURSOR_COLORS[hashStringToIndex(playerName)];
+            setShowSamePageNotification(false);
+            setTimeout(() => {
+              setSamePagePlayerName(playerName);
+              setSamePagePlayerColor(playerColor);
+              setShowSamePageNotification(true);
+            }, 50);
+          }
+        }
+      }
     },
   });
-  
+
   // Update current player ID when players list changes
   useEffect(() => {
     // Update ref for use in callbacks
     playersRef.current = players;
-    
+
     // Update player names map
     players.forEach(player => {
       playerNamesRef.current.set(player.id, player.name);
     });
-    
+
     const currentPlayer = players.find(p => p.name === playerName);
     if (currentPlayer) {
       currentPlayerIdRef.current = currentPlayer.id;
@@ -632,34 +662,41 @@ const Game = () => {
       }
     }
   }, [players, playerName, localClicks]);
-  
-  // CLEAN NOTIFICATION SYSTEM: Check for same-page players whenever player locations change
+
+  // Track previous article to detect when WE navigate (not just when others do)
+  const prevArticleRef = useRef<string | null>(null);
+
+  // ROBUST NOTIFICATION SYSTEM: Handle both "I arrived" and "they arrived" cases
   useEffect(() => {
     if (!isMultiplayer || !currentArticle || currentArticle === startArticle) return;
     if (!currentPlayerIdRef.current) return;
-    
+
     const myArticle = currentArticleRef.current;
-    
+    const didNavigate = prevArticleRef.current !== null && prevArticleRef.current !== myArticle;
+    prevArticleRef.current = myArticle;
+
     // Find other players on the same article as us
-    const playersOnSamePage = players.filter(p => 
-      p.id !== currentPlayerIdRef.current && 
+    const playersOnSamePage = players.filter(p =>
+      p.id !== currentPlayerIdRef.current &&
       p.currentArticle === myArticle
     );
-    
-    // Show notification for any player we haven't notified about on this article
-    playersOnSamePage.forEach(player => {
-      const lastNotifiedArticle = lastNotificationArticleRef.current.get(player.id);
-      
-      // Show notification if:
-      // 1. We haven't shown a notification for this player on this article yet
-      // OR
-      // 2. They left and came back (last notified article is different)
-      if (lastNotifiedArticle !== myArticle) {
-        console.log(`[Notification] ${player.name} is on same page: ${myArticle}`);
-        
-        // Mark that we've shown notification for this player on this article
-        lastNotificationArticleRef.current.set(player.id, myArticle);
-        
+
+    // Show notification for the first player we haven't met at this article yet
+    for (const player of playersOnSamePage) {
+      // Get or create the set of articles where we've met this player
+      let meetingLocations = seenMeetingsRef.current.get(player.id);
+      if (!meetingLocations) {
+        meetingLocations = new Set<string>();
+        seenMeetingsRef.current.set(player.id, meetingLocations);
+      }
+
+      // Show notification if we haven't met this player at this article yet
+      if (!meetingLocations.has(myArticle)) {
+        console.log(`[Notification] Meeting ${player.name} at ${myArticle} (didNavigate: ${didNavigate})`);
+
+        // Mark that we've met this player at this article
+        meetingLocations.add(myArticle);
+
         // Show the notification
         const playerColor = CURSOR_COLORS[hashStringToIndex(player.name)];
         setShowSamePageNotification(false);
@@ -668,30 +705,30 @@ const Game = () => {
           setSamePagePlayerColor(playerColor);
           setShowSamePageNotification(true);
         }, 50);
-        
+
         // Only show one notification at a time
-        return;
+        break;
       }
-    });
+    }
   }, [players, currentArticle, startArticle, isMultiplayer]);
-  
+
   // Connect to multiplayer - use global flag to prevent duplicate connections
   // during page transitions (two Game components mount simultaneously)
   useEffect(() => {
     if (!isMultiplayer || !lobbyCode || !playerName) {
       return;
     }
-    
+
     // Prevent duplicate connection attempts across all Game instances
     if (globalConnectionAttempted) {
       console.log("Connection already attempted by another Game instance, skipping");
       return;
     }
     globalConnectionAttempted = true;
-    
+
     console.log("Multiplayer game detected, connecting...");
     connect();
-    
+
     // Don't disconnect on cleanup - keep connection alive during page transitions
     // The connection will be cleaned up when navigating away from the game
   }, [isMultiplayer, lobbyCode, playerName, connect]);
@@ -701,14 +738,14 @@ const Game = () => {
     if (!isMultiplayer || !isConnected || !lobbyCode || !playerName) {
       return;
     }
-    
+
     // Prevent duplicate rejoin attempts across all Game instances
     if (globalRejoinAttempted) {
       console.log("Rejoin already attempted by another Game instance, skipping");
       return;
     }
     globalRejoinAttempted = true;
-    
+
     console.log("Rejoining room:", lobbyCode, "as", playerName);
     rejoinRoom(lobbyCode, playerName);
   }, [isMultiplayer, isConnected, lobbyCode, playerName, rejoinRoom]);
@@ -717,14 +754,14 @@ const Game = () => {
   useEffect(() => {
     // Add immediately on mount
     document.documentElement.classList.add("wiki-dark-mode");
-    
+
     // Also ensure it's set (in case of re-renders)
     const checkDarkMode = setInterval(() => {
       if (!document.documentElement.classList.contains("wiki-dark-mode")) {
         document.documentElement.classList.add("wiki-dark-mode");
       }
     }, 100);
-    
+
     return () => {
       clearInterval(checkDarkMode);
       document.documentElement.classList.remove("wiki-dark-mode");
@@ -739,11 +776,11 @@ const Game = () => {
     setCurrentArticle(startArticle);
     currentArticleRef.current = startArticle;
   }, [startArticle]);
-  
+
   // Clear cursors and same-page tracking when current article changes
   useEffect(() => {
     if (!isMultiplayer) return;
-    
+
     const container = cursorContainerRef.current;
     if (container) {
       // Hide all cursors that are not on the current page
@@ -762,7 +799,7 @@ const Game = () => {
   useEffect(() => {
     if (routeCompleted && speedrunWidgetRef.current && !hasFinishedRef.current) {
       hasFinishedRef.current = true;
-      
+
       const finalTime = speedrunWidgetRef.current.getCurrentTime();
       const segments = speedrunWidgetRef.current.getSegments();
 
@@ -786,11 +823,11 @@ const Game = () => {
     if (speedrunWidgetRef.current) {
       speedrunWidgetRef.current.addSegment(articleName);
     }
-    
+
     // Update current article for cursor sharing
     setCurrentArticle(articleName);
     currentArticleRef.current = articleName;
-    
+
     // Send navigation to server if multiplayer
     if (isMultiplayer) {
       // Track clicks locally (will be synced with server response)
@@ -804,28 +841,28 @@ const Game = () => {
   // Use article-relative coordinates so cursor position is accurate regardless of screen size
   const lastPositionRef = useRef({ x: 0, y: 0 });
   const lastMouseClientRef = useRef({ clientX: 0, clientY: 0 }); // Store last mouse screen position for scroll updates
-  
+
   useEffect(() => {
     if (!isMultiplayer || !isConnected) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const now = Date.now();
-      
+
       // Store last mouse screen position for scroll updates
       lastMouseClientRef.current = { clientX: e.clientX, clientY: e.clientY };
-      
+
       // Find the article container to calculate relative position
       const articleContainer = document.querySelector('.wikipedia-viewer');
       if (!articleContainer) return;
-      
+
       const rect = articleContainer.getBoundingClientRect();
-      
+
       // Calculate position relative to article container
       // x: pixels from article left edge
       // y: position within the article content (rect.top already accounts for scroll)
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      
+
       // Calculate percentages for cross-device consistency
       // y = clientY - rect.top already gives absolute position within article
       // because rect.top becomes negative when scrolled, effectively adding scroll offset
@@ -833,12 +870,12 @@ const Game = () => {
       const articleWidth = (articleContainer as HTMLElement).offsetWidth;
       const qx = x / articleWidth; // Use offsetWidth consistently (same as receiver)
       const qy = y / articleHeight;
-      
+
       // Calculate movement distance since last send (in pixels)
       const dx = x - lastPositionRef.current.x;
       const dy = y - lastPositionRef.current.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       // Adaptive throttling: faster updates when moving more
       // Fast movement (distance > 20px): 16ms (~60fps)
       // Medium movement (distance > 5px): 25ms (~40fps)
@@ -849,16 +886,16 @@ const Game = () => {
       } else if (distance > 5) {
         minInterval = 25;
       }
-      
+
       if (now - lastCursorSendRef.current < minInterval) return;
-      
+
       lastCursorSendRef.current = now;
       lastPositionRef.current = { x, y };
 
       // Detect cursor type from element under mouse
       const target = e.target as HTMLElement;
       let cursorType: string | undefined;
-      
+
       if (target.tagName === 'A' || target.closest('a')) {
         cursorType = 'hand'; // Hand cursor for links (user request)
       } else if (target.tagName === 'IMG' || target.closest('img')) {
@@ -868,7 +905,7 @@ const Game = () => {
       } else {
         const computedStyle = window.getComputedStyle(target);
         const cursor = computedStyle.cursor;
-        
+
         // Check computed cursor style - browser already does precise hit-testing!
         if (cursor === 'text') {
           cursorType = 'text';
@@ -896,42 +933,42 @@ const Game = () => {
 
       sendCursor(qx, qy, currentArticle || startArticle, cursorType, anchorId || undefined, nextAnchorId || undefined, sectionRatio);
     };
-    
+
     // Use RAF to continuously monitor position changes (more reliable than scroll events)
     // This catches scroll, resize, and any other position changes
     let rafId: number;
     let lastRectTop = 0;
-    
+
     const checkPositionChange = () => {
       const { clientX, clientY } = lastMouseClientRef.current;
-      
+
       // Only check if we have a mouse position
       if (clientX !== 0 || clientY !== 0) {
         const articleContainer = document.querySelector('.wikipedia-viewer');
         if (articleContainer) {
           const rect = articleContainer.getBoundingClientRect();
-          
+
           // Check if article position changed (indicates scroll)
           if (Math.abs(rect.top - lastRectTop) > 1) {
             lastRectTop = rect.top;
-            
+
             const now = Date.now();
             // Throttle to 30fps max for scroll updates
             if (now - lastCursorSendRef.current >= 33) {
               const x = clientX - rect.left;
               const y = clientY - rect.top;
-              
+
               // Only send if position actually changed significantly
               const dx = Math.abs(x - lastPositionRef.current.x);
               const dy = Math.abs(y - lastPositionRef.current.y);
-              
+
               if (dx > 1 || dy > 1) {
                 const articleHeight = (articleContainer as HTMLElement).offsetHeight;
                 const articleWidth = (articleContainer as HTMLElement).offsetWidth;
                 const qx = x / articleWidth; // Use offsetWidth consistently (same as receiver)
                 const qy = y / articleHeight;
                 const { anchorId, nextAnchorId, sectionRatio } = findSurroundingAnchors(y);
-                
+
                 lastCursorSendRef.current = now;
                 lastPositionRef.current = { x, y };
                 sendCursor(qx, qy, currentArticle || startArticle, undefined, anchorId || undefined, nextAnchorId || undefined, sectionRatio);
@@ -940,10 +977,10 @@ const Game = () => {
           }
         }
       }
-      
+
       rafId = requestAnimationFrame(checkPositionChange);
     };
-    
+
     rafId = requestAnimationFrame(checkPositionChange);
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -960,75 +997,75 @@ const Game = () => {
 
     // Continuously update cursor positions using RAF with smooth interpolation
     let rafId: number;
-    
+
     // Store current rendered positions for smooth interpolation
     // We store article-relative coordinates so the cursor stays pinned during scroll
     const cursorPositions = new Map<string, { rx: number; ry: number }>();
-    
+
     // Track last article width to detect resize
     let lastArticleWidth = 0;
-    
+
     const updateAllCursorPositions = () => {
       const container = cursorContainerRef.current;
       if (container) {
         const articleContainer = document.querySelector('.wikipedia-viewer');
         if (articleContainer) {
           const currentArticleWidth = (articleContainer as HTMLElement).offsetWidth;
-          
+
           // Detect window resize - reset cursor positions to prevent "traveling"
           if (lastArticleWidth > 0 && Math.abs(currentArticleWidth - lastArticleWidth) > 1) {
             // Clear interpolated positions to force immediate snap to new positions
             cursorPositions.clear();
           }
           lastArticleWidth = currentArticleWidth;
-          
+
           // Update each cursor's screen position based on stored article-relative coordinates
           const cursors = container.querySelectorAll('.other-player-cursor');
           cursors.forEach((cursor) => {
             const cursorEl = cursor as HTMLElement;
             const playerId = cursorEl.getAttribute('data-player-id') || '';
             const cursorArticle = cursorEl.getAttribute('data-article') || '';
-            
+
             // Only show cursor if it's on the same page
             if (cursorArticle !== currentArticle) {
               cursorEl.style.display = 'none';
               return;
             }
-            
+
             cursorEl.style.display = '';
-            
+
             const pqx = parseFloat(cursorEl.getAttribute('data-x') || '0');
             const pqy = parseFloat(cursorEl.getAttribute('data-y') || '0');
             const anchorId = cursorEl.getAttribute('data-anchor-id') || null;
             const nextAnchorId = cursorEl.getAttribute('data-next-anchor-id') || null;
             const sectionRatio = parseFloat(cursorEl.getAttribute('data-section-ratio') || '0');
-            
+
             // Convert to target pixel positions using section interpolation
             const targetRx = pqx * currentArticleWidth;
             const targetRy = resolveSectionPosition(anchorId, nextAnchorId, sectionRatio, pqy, articleContainer);
-            
+
             // Get current position or initialize to target
             let pos = cursorPositions.get(playerId);
             if (!pos) {
               pos = { rx: targetRx, ry: targetRy };
               cursorPositions.set(playerId, pos);
             }
-            
+
             // Smooth interpolation on relative coordinates (lerp factor 0.3 = responsive but smooth)
             pos.rx += (targetRx - pos.rx) * 0.3;
             pos.ry += (targetRy - pos.ry) * 0.3;
-            
+
             // Apply coordinates directly as absolute transform
             cursorEl.style.transform = `translate(${pos.rx}px, ${pos.ry}px)`;
           });
         }
       }
-      
+
       rafId = requestAnimationFrame(updateAllCursorPositions);
     };
-    
+
     rafId = requestAnimationFrame(updateAllCursorPositions);
-    
+
     return () => {
       cancelAnimationFrame(rafId);
     };
@@ -1037,14 +1074,14 @@ const Game = () => {
   // Clean up cursor elements for players who have disconnected
   useEffect(() => {
     if (!isMultiplayer) return;
-    
+
     const container = cursorContainerRef.current;
     if (!container) return;
-    
+
     // Get all cursor elements
     const cursorElements = container.querySelectorAll('.other-player-cursor');
     const activePlayerIds = new Set(players.map(p => p.id));
-    
+
     // Remove cursors for players no longer in the room
     cursorElements.forEach((cursorEl) => {
       const playerId = (cursorEl as HTMLElement).getAttribute('data-player-id');
@@ -1067,14 +1104,14 @@ const Game = () => {
     // Clear race state when leaving the game
     sessionStorage.removeItem("wiki-race-started-at");
     sessionStorage.removeItem("wiki-race-player-name");
-    
+
     // Reset global connection flags
     globalConnectionAttempted = false;
     globalRejoinAttempted = false;
-    
+
     // Disconnect from WebSocket
     disconnect();
-    
+
     // Go back to menu or lobby browser
     if (isMultiplayer) {
       navigate("/lobby-browser", { state: { direction: "back" } });
@@ -1115,12 +1152,12 @@ const Game = () => {
       <div className={`game-hud ${hudVisible ? "visible" : ""}`}>
         {/* Scoreboard */}
         {isMultiplayer && (
-          <Scoreboard 
+          <Scoreboard
             players={players.filter(p => !p.finished)}
-            currentPlayerClicks={players.find(p => 
+            currentPlayerClicks={players.find(p =>
               currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
             )?.clicks || localClicks}
-            currentPlayerName={players.find(p => 
+            currentPlayerName={players.find(p =>
               currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
             )?.name || playerName || "You"}
           />
@@ -1146,12 +1183,12 @@ const Game = () => {
           isStopped={routeCompleted}
           isMultiplayer={isMultiplayer}
         />
-        <CountdownNotification 
+        <CountdownNotification
           secondsLeft={countdownSeconds}
-          visible={showCountdown} 
+          visible={showCountdown}
         />
         {/* Test button for countdown */}
-        <div 
+        <div
           style={{
             position: 'fixed',
             bottom: '60px',
@@ -1160,7 +1197,7 @@ const Game = () => {
           }}
         >
           <button onClick={testCountdown}>Spawn Countdown</button>
-          <button 
+          <button
             onClick={() => {
               setSamePagePlayerName("TestPlayer");
               setSamePagePlayerColor("#00aaff");
@@ -1191,7 +1228,7 @@ const Game = () => {
           )}
           messages={messages}
           currentPlayerClicks={localClicks}
-          currentPlayerName={mockPlayers.length > 0 ? (playerName || "SwiftRunner42") : (players.find(p => 
+          currentPlayerName={mockPlayers.length > 0 ? (playerName || "SwiftRunner42") : (players.find(p =>
             currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
           )?.name || playerName || "You")}
           onPlayAgain={handlePlayAgain}
