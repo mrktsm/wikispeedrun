@@ -99,12 +99,17 @@ const Profile = () => {
                   <IoChevronDown className="profile-name-dropdown" />
                 </div>
                 <div className="profile-location">
-                  <img
-                    src={getCountryFlagUrl(mockPlayerData.country)}
-                    alt={mockPlayerData.country}
-                    className="profile-flag-small"
-                  />
-                  <span>United States</span>
+                  {user?.user_metadata?.country && (
+                    <>
+                      <img
+                        src={getCountryFlagUrl(user.user_metadata.country)}
+                        alt={user.user_metadata.country}
+                        className="profile-flag-small"
+                      />
+                      <span>{new Intl.DisplayNames(['en'], { type: 'region' }).of(user.user_metadata.country)}</span>
+                    </>
+                  )}
+                  {(!user?.user_metadata?.country) && <span>Unknown Location</span>}
                 </div>
                 <p className="profile-bio">{mockPlayerData.bio}</p>
               </div>

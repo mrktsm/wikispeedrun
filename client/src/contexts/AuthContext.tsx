@@ -31,10 +31,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Listen for auth changes
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
+
+            // Detect country if user is logged in and doesn't have it set
+            if (session?.user && !session.user.user_metadata?.country) {
+                try {
+                    const response = await fetch('https://ipapi.co/json/');
+                    const data = await response.json();
+                    if (data.country_code) {
+                        const { error } = await supabase.auth.updateUser({
+                            data: { country: data.country_code }
+                        });
+                        if (!error) {
+                            // Update local user state to reflect change immediately
+                            setUser(prev => prev ? {
+                                ...prev,
+                                user_metadata: {
+                                    ...prev.user_metadata,
+                                    country: data.country_code
+                                }
+                            } : null);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error detecting country:', error);
+                }
+            }
         });
 
         return () => subscription.unsubscribe();
