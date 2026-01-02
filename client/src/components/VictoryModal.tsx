@@ -261,6 +261,8 @@ const VictoryModal = ({
           </div>
         </div>
       </div>
+      
+      <div className="victory-bottom-spacer"></div>
     </div>
   );
 };

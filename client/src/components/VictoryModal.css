@@ -13,13 +13,23 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.85);
-  display: grid;
-  grid-template-rows: minmax(min-content, 180px) auto 1fr;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   z-index: 10000;
-  padding: 0 24px;
   backdrop-filter: blur(8px);
   overflow-y: auto;
+  padding: 24px;
+}
+
+.victory-banner-row {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding-bottom: 20px;
 }
 
 .victory-container {
@@ -29,17 +39,13 @@
   max-width: 1100px;
   width: auto;
   position: relative;
-  grid-row: 2;
+  flex-shrink: 0;
   animation: victory-appear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.victory-banner-row {
-  grid-row: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  align-self: center;
+.victory-bottom-spacer {
+  flex: 1;
+  min-height: 0;
 }
 
 @keyframes victory-appear {
