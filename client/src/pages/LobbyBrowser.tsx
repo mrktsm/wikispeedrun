@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { IoRefresh, IoSearch, IoAdd } from "react-icons/io5";
-import { FaBolt, FaCog, FaSignInAlt } from "react-icons/fa";
+import { IoRefresh, IoAdd } from "react-icons/io5";
+import { FaBolt } from "react-icons/fa";
+import Navbar from "../components/Navbar";
 import "./LobbyBrowser.css";
 
 interface Lobby {
@@ -218,7 +219,7 @@ const LobbyBrowser = () => {
 
   // Ref for measuring the table wrapper (its height is set by CSS flex)
   const tableWrapperRef = useRef<HTMLDivElement>(null);
-  
+
   // Calculate initial placeholder count based on viewport height immediately
   // This avoids the delay from DOM measurement
   const calculateInitialPlaceholders = () => {
@@ -229,7 +230,7 @@ const LobbyBrowser = () => {
     const estimatedRows = Math.floor(estimatedAvailableHeight / baseRowHeight);
     return Math.max(15, estimatedRows);
   };
-  
+
   const [placeholderCount, setPlaceholderCount] = useState<number>(calculateInitialPlaceholders());
   const [extraRowPadding, setExtraRowPadding] = useState<number>(0);
 
@@ -320,44 +321,7 @@ const LobbyBrowser = () => {
 
   return (
     <div className="lobby-browser-page">
-      {/* Navigation Bar */}
-      <nav className="leaderboard-nav">
-        <div className="leaderboard-nav-container">
-          <div className="leaderboard-nav-content">
-            <div className="leaderboard-nav-left">
-              <div className="leaderboard-nav-links">
-                <button
-                  className="leaderboard-nav-button"
-                  onClick={() => navigate("/")}
-                >
-                  PLAY
-                </button>
-                <button className="leaderboard-nav-button active">
-                  LEADERBOARD
-                </button>
-                <button className="leaderboard-nav-button gray">LEARN</button>
-                <button className="leaderboard-nav-button gray">
-                  COMMUNITY
-                </button>
-                <button className="leaderboard-nav-button gray">TOOLS</button>
-              </div>
-            </div>
-
-            <div className="leaderboard-nav-links">
-              <button className="leaderboard-nav-button gray">
-                <IoSearch className="leaderboard-nav-icon" />
-              </button>
-              <button className="leaderboard-nav-button gray">
-                <FaCog className="leaderboard-nav-icon" />
-              </button>
-              <button className="leaderboard-nav-button blue">
-                <FaSignInAlt className="leaderboard-nav-icon" />
-                Sign in
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePage="play" />
 
       {/* Spacer */}
       <div className="lobby-browser-nav-spacer" />
@@ -464,9 +428,8 @@ const LobbyBrowser = () => {
                     {filteredLobbies.map((lobby) => (
                       <tr
                         key={lobby.id}
-                        className={`${
-                          selectedLobby === lobby.id ? "selected" : ""
-                        } ${lobby.status !== "waiting" ? "unavailable" : ""}`}
+                        className={`${selectedLobby === lobby.id ? "selected" : ""
+                          } ${lobby.status !== "waiting" ? "unavailable" : ""}`}
                         onClick={() =>
                           lobby.status === "waiting" &&
                           setSelectedLobby(
@@ -528,9 +491,8 @@ const LobbyBrowser = () => {
                         return (
                           <tr
                             key={`empty-${index}`}
-                            className={`empty-placeholder-row ${
-                              isOdd ? "odd" : "even"
-                            }`}
+                            className={`empty-placeholder-row ${isOdd ? "odd" : "even"
+                              }`}
                           >
                             <td>
                               <div className="lobby-host">

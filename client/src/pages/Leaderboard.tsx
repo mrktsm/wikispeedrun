@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaTrophy, FaCog, FaSignInAlt, FaBolt } from "react-icons/fa";
+import { FaTrophy, FaBolt } from "react-icons/fa";
 import {
-  IoSearch,
   IoShuffle,
   IoSwapHorizontal,
   IoChevronDown,
@@ -13,6 +12,7 @@ import fightIcon from "../assets/fight-svgrepo-com(1).svg";
 import raceFlagIcon from "../assets/race-flag-svgrepo-com.svg";
 import wikipediaLogo from "../assets/wikipedia-logotype-of-earth-puzzle-svgrepo-com.svg";
 import ProfilePopover from "../components/ProfilePopover";
+import Navbar from "../components/Navbar";
 import "./Leaderboard.css";
 
 // Wikipedia API helpers
@@ -83,8 +83,6 @@ const Leaderboard = () => {
   const [autoScroll, setAutoScroll] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [sampleSize, setSampleSize] = useState(50);
-  const [showPlayDropdown, setShowPlayDropdown] = useState(false);
-  const playButtonRef = useRef<HTMLDivElement>(null);
 
   // Autocomplete state
   const [startSuggestions, setStartSuggestions] = useState<string[]>([]);
@@ -376,97 +374,18 @@ const Leaderboard = () => {
 
   return (
     <div className="leaderboard-page">
-      {/* Navigation Bar */}
-      <nav className="leaderboard-nav">
-        <div className="leaderboard-nav-container">
-          <div className="leaderboard-nav-content">
-            {/* Navigation Links */}
-            <div className="leaderboard-nav-left">
-              <div className="leaderboard-nav-links">
-                <div
-                  className="play-dropdown-container"
-                  ref={playButtonRef}
-                  onMouseEnter={() => setShowPlayDropdown(true)}
-                  onMouseLeave={() => setShowPlayDropdown(false)}
-                >
-                  <button
-                    className="leaderboard-nav-button"
-                    onClick={() => navigate("/lobby-browser")}
-                  >
-                    PLAY
-                  </button>
-                  {showPlayDropdown && (
-                    <div className="play-dropdown-menu">
-                      <button
-                        className="play-dropdown-item"
-                        onClick={() => {
-                          navigate("/race-lobby");
-                          setShowPlayDropdown(false);
-                        }}
-                      >
-                        Create lobby game
-                      </button>
-                      <button
-                        className="play-dropdown-item"
-                        onClick={() => {
-                          navigate("/lobby-browser");
-                          setShowPlayDropdown(false);
-                        }}
-                      >
-                        Quick game
-                      </button>
-                      <button
-                        className="play-dropdown-item"
-                        onClick={() => {
-                          setShowSoloModal(true);
-                          setShowPlayDropdown(false);
-                        }}
-                      >
-                        Solo
-                      </button>
-                      <button
-                        className="play-dropdown-item"
-                      >
-                        Duel
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <button className="leaderboard-nav-button active">
-                  LEADERBOARD
-                </button>
-                <button className="leaderboard-nav-button gray">LEARN</button>
-                <button className="leaderboard-nav-button gray">
-                  COMMUNITY
-                </button>
-                <button className="leaderboard-nav-button gray">TOOLS</button>
-              </div>
-            </div>
-
-            {/* Right Side Actions */}
-            <div className="leaderboard-nav-links">
-              <button className="leaderboard-nav-button gray">
-                <IoSearch className="leaderboard-nav-icon" />
-              </button>
-              <button className="leaderboard-nav-button gray">
-                <FaCog className="leaderboard-nav-icon" />
-              </button>
-              <button className="leaderboard-nav-button blue">
-                <FaSignInAlt className="leaderboard-nav-icon" />
-                Sign in
-              </button>
+      <Navbar
+        activePage="leaderboard"
+        secondaryNav={
+          <div className="leaderboard-nav-secondary">
+            <div className="leaderboard-tabs">
+              <button className="leaderboard-tab active">Quick pairing</button>
+              <button className="leaderboard-tab">Lobby</button>
+              <button className="leaderboard-tab">Correspondence</button>
             </div>
           </div>
-        </div>
-        {/* Secondary Nav - Tabs */}
-        <div className="leaderboard-nav-secondary">
-          <div className="leaderboard-tabs">
-            <button className="leaderboard-tab active">Quick pairing</button>
-            <button className="leaderboard-tab">Lobby</button>
-            <button className="leaderboard-tab">Correspondence</button>
-          </div>
-        </div>
-      </nav>
+        }
+      />
 
       {/* Main Content */}
       <div className="leaderboard-main">
@@ -578,7 +497,6 @@ const Leaderboard = () => {
                             rating={1800 + entry.rank * 50}
                             gamesPlayed={entry.gamesPlayed}
                             bestTime={entry.bestTime}
-                            avgTime={entry.avgTime}
                             winRate={entry.winRate}
                           >
                             <span className="leaderboard-username">

@@ -12,8 +12,7 @@
 
 /* Main Content */
 .auth-main {
-  padding: 0 40px 48px 40px;
-  max-width: 1440px;
+  padding: 0 40px 48px 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -26,9 +25,13 @@
   height: 48px;
 }
 
-/* Left-aligned content container */
+/* Precisely centered in the left half of the viewport */
 .auth-content {
+  width: 100%;
   max-width: 400px;
+  position: relative;
+  left: 25%;
+  transform: translateX(-50%);
 }
 
 /* Page Title */
@@ -81,34 +84,44 @@
   color: #555;
 }
 
-/* Google OAuth Button */
-.auth-google-btn {
+/* Social OAuth Buttons */
+.auth-social-row {
+  display: flex;
+  gap: 12px;
   width: 100%;
-  padding: 12px 20px;
+}
+
+.auth-social-btn {
+  flex: 1;
+  padding: 12px 10px;
   background: linear-gradient(to bottom, #333, #242424);
   color: #bababa;
   border: 1px solid #444;
   border-radius: 4px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
+  white-space: nowrap;
 }
 
-.auth-google-btn:hover {
+.auth-social-btn:hover {
   background: linear-gradient(to bottom, #444, #333);
   color: #fff;
   border-color: #555;
 }
 
-.auth-google-icon {
-  width: 18px;
-  height: 18px;
+.auth-social-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* OR Divider */
@@ -146,7 +159,7 @@
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
-  width: fit-content;
+  width: 100%;
 }
 
 .auth-submit-btn:hover {
@@ -229,11 +242,13 @@
 /* Responsive */
 @media (max-width: 600px) {
   .auth-main {
-    padding: 0 20px 32px 20px;
+    padding: 0 40px 32px 40px;
   }
 
   .auth-content {
     max-width: 100%;
+    margin-left: 0;
+    transform: none;
   }
 
   .auth-title {

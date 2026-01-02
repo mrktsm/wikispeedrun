@@ -6,6 +6,7 @@ import {
   type Player as MultiplayerPlayer,
 } from "../hooks/useMultiplayer";
 import ProfilePopover from "../components/ProfilePopover";
+import Navbar from "../components/Navbar";
 import "./RaceLobby.css";
 
 interface ChatMessage {
@@ -87,7 +88,6 @@ const RaceLobby = () => {
     connect,
     disconnect,
     joinRoom,
-    leaveRoom,
     startRace,
   } = useMultiplayer({
     onRaceStarted: handleRaceStarted,
@@ -258,51 +258,9 @@ const RaceLobby = () => {
     }, 500);
   };
 
-  // Leave lobby
-  const handleLeave = () => {
-    leaveRoom();
-    navigate("/lobby-browser");
-  };
-
   return (
     <div className="race-lobby-page">
-      {/* Navigation Bar - EXACT same layout/styles as main menu */}
-      <nav className="leaderboard-nav">
-        <div className="leaderboard-nav-container">
-          <div className="leaderboard-nav-content">
-            {/* Left - primary nav buttons (same as main menu) */}
-            <div className="leaderboard-nav-left">
-              <div className="leaderboard-nav-links">
-                <button
-                  className="leaderboard-nav-button"
-                  onClick={handleLeave}
-                >
-                  PLAY
-                </button>
-                <button className="leaderboard-nav-button active">
-                  LEADERBOARD
-                </button>
-                <button className="leaderboard-nav-button gray">LEARN</button>
-                <button className="leaderboard-nav-button gray">
-                  COMMUNITY
-                </button>
-                <button className="leaderboard-nav-button gray">TOOLS</button>
-              </div>
-            </div>
-
-            {/* Right - search/settings/sign-in, same as main menu */}
-            <div className="leaderboard-nav-links">
-              <button className="leaderboard-nav-button gray">
-                {/* search icon slot (optional later) */}
-              </button>
-              <button className="leaderboard-nav-button gray">
-                {/* settings icon slot (optional later) */}
-              </button>
-              <button className="leaderboard-nav-button blue">Sign in</button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePage="play" />
 
       {/* Spacer to mirror the secondary tab bar height from main menu */}
       <div className="race-lobby-nav-spacer" />
