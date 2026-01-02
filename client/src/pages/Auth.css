@@ -12,13 +12,18 @@
 
 /* Main Content */
 .auth-main {
-  padding: 120px 0 100px 150px;
-  /* Fixed: 120px top, 150px left */
-  flex: 1;
+  /* Center content horizontally at 25% of screen width (center of left half) */
   display: flex;
   flex-direction: column;
-  width: 100%;
+  justify-content: center;
+  align-items: center;
+  /* Center horizontally within this container */
+  width: 50vw;
+  /* Take up left half of screen */
+  height: calc(100vh - 45px);
+  /* Subtract navbar height */
   box-sizing: border-box;
+  padding-left: 0;
 }
 
 /* Removed centering logic, now using fixed padding from parent */
@@ -26,6 +31,8 @@
   width: 100%;
   max-width: 400px;
   position: relative;
+  margin-top: -60px;
+  /* Offset the title height to center form elements */
 }
 
 /* Page Title */
