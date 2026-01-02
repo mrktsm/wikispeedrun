@@ -12,17 +12,18 @@
 
 /* Main Content */
 .auth-main {
-  padding: 0 40px 48px 0;
+  padding: 0 40px 0 0;
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Spacer under nav */
+/* Spacer under nav - removed to allow true vertical centering */
 .auth-nav-spacer {
-  height: 48px;
+  display: none;
 }
 
 /* Precisely centered in the left half of the viewport */
@@ -36,6 +37,10 @@
 
 /* Page Title */
 .auth-title {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 100%;
   font-size: 28px;
   font-weight: 300;
   color: #fff;
@@ -174,6 +179,10 @@
 
 /* Mode Switch */
 .auth-switch {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
   margin-top: 24px;
   font-size: 13px;
   color: #8a8a8a;
