@@ -12,41 +12,30 @@
 
 /* Main Content */
 .auth-main {
-  padding: 0 40px 0 0;
+  padding: 120px 0 100px 150px;
+  /* Fixed: 120px top, 150px left */
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Spacer under nav - removed to allow true vertical centering */
-.auth-nav-spacer {
-  display: none;
-}
-
-/* Precisely centered in the left half of the viewport */
+/* Removed centering logic, now using fixed padding from parent */
 .auth-content {
   width: 100%;
   max-width: 400px;
   position: relative;
-  left: 25%;
-  transform: translateX(-50%);
 }
 
 /* Page Title */
 .auth-title {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  width: 100%;
+  margin: 0 0 32px 0;
   font-size: 28px;
   font-weight: 300;
   color: #fff;
   letter-spacing: 2px;
   text-transform: uppercase;
-  margin-bottom: 32px;
 }
 
 /* Form Styles */
@@ -255,23 +244,4 @@
   margin-top: -8px;
 }
 
-/* Responsive */
-@media (max-width: 600px) {
-  .auth-main {
-    padding: 0 40px 32px 40px;
-  }
-
-  .auth-content {
-    max-width: 100%;
-    margin-left: 0;
-    transform: none;
-  }
-
-  .auth-title {
-    font-size: 22px;
-  }
-
-  .auth-submit-btn {
-    width: 100%;
-  }
-}
+/* Responsive - Removed to keep layout strictly fixed as requested */

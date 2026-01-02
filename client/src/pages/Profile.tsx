@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
-import { IoSearch, IoChevronDown } from "react-icons/io5";
-import { FaCog, FaSignInAlt, FaTrophy, FaClock, FaGamepad, FaFire } from "react-icons/fa";
+import { IoChevronDown } from "react-icons/io5";
+import { useAuth } from "../contexts/AuthContext";
+import Navbar from "../components/Navbar";
 import "./Leaderboard.css";
 import "./Profile.css";
 
@@ -13,7 +13,7 @@ const mockPlayerData = {
   level: 54,
   yearsOfService: 1,
   xp: 200,
-  
+
   // Overall stats
   gamesPlayed: 247,
   wins: 142,
@@ -23,7 +23,7 @@ const mockPlayerData = {
   bestTime: "23.4s",
   totalPlaytime: "24h 32m",
   avgTimePerArticle: "12.8s",
-  
+
   // Recent matches
   recentMatches: [
     { route: "Apple to Banana", mode: "Race", result: "Win", clicks: 6, time: "45.2s", date: "2 hours ago" },
@@ -39,7 +39,7 @@ const mockPlayerData = {
     { route: "Mars to Space", mode: "Race", result: "Win", clicks: 7, time: "51.8s", date: "5 days ago" },
     { route: "Python to Programming", mode: "Race", result: "Win", clicks: 4, time: "28.9s", date: "6 days ago" },
   ],
-  
+
   // Achievements
   achievements: [
     { name: "Speed Demon", icon: "⚡", unlocked: true },
@@ -49,14 +49,14 @@ const mockPlayerData = {
     { name: "Perfect Path", icon: "⭐", unlocked: true },
     { name: "Marathon Runner", icon: "🏃", unlocked: false },
   ],
-  
+
   // Badges
   badges: [
     { name: "M", xp: "500+", unlocked: true },
     { name: "Dog", icon: "🐕", unlocked: true },
     { name: "Check", icon: "✓", unlocked: true },
   ],
-  
+
   // Stats
   gamesOwned: 247,
   dlcOwned: 0,
@@ -67,7 +67,10 @@ const mockPlayerData = {
 };
 
 const Profile = () => {
-  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Get username from auth context, fallback to mock data
+  const username = user?.user_metadata?.nickname || user?.email || mockPlayerData.name;
 
   const getCountryFlagUrl = (countryCode: string) => {
     return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
@@ -76,43 +79,7 @@ const Profile = () => {
   return (
     <div className="profile-page">
       {/* Navigation Bar */}
-      <nav className="leaderboard-nav">
-        <div className="leaderboard-nav-container">
-          <div className="leaderboard-nav-content">
-            <div className="leaderboard-nav-left">
-              <div className="leaderboard-nav-links">
-                <button
-                  className="leaderboard-nav-button"
-                  onClick={() => navigate("/")}
-                >
-                  PLAY
-                </button>
-                <button className="leaderboard-nav-button active">
-                  LEADERBOARD
-                </button>
-                <button className="leaderboard-nav-button gray">LEARN</button>
-                <button className="leaderboard-nav-button gray">
-                  COMMUNITY
-                </button>
-                <button className="leaderboard-nav-button gray">TOOLS</button>
-              </div>
-            </div>
-
-            <div className="leaderboard-nav-links">
-              <button className="leaderboard-nav-button gray">
-                <IoSearch className="leaderboard-nav-icon" />
-              </button>
-              <button className="leaderboard-nav-button gray">
-                <FaCog className="leaderboard-nav-icon" />
-              </button>
-              <button className="leaderboard-nav-button blue">
-                <FaSignInAlt className="leaderboard-nav-icon" />
-                Sign in
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePage="profile" />
 
       {/* Spacer */}
       <div className="profile-nav-spacer" />
@@ -124,11 +91,11 @@ const Profile = () => {
           <div className="profile-header-container">
             <div className="profile-header-left">
               <div className="profile-avatar-large">
-                <div className="profile-avatar-placeholder-large" />
+                {username.charAt(0).toUpperCase()}
               </div>
               <div className="profile-header-info">
                 <div className="profile-name-row">
-                  <h1 className="profile-name-large">{mockPlayerData.name}</h1>
+                  <h1 className="profile-name-large">{username}</h1>
                   <IoChevronDown className="profile-name-dropdown" />
                 </div>
                 <div className="profile-location">

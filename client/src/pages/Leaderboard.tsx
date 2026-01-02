@@ -375,7 +375,7 @@ const Leaderboard = () => {
   return (
     <div className="leaderboard-page">
       <Navbar
-        activePage="leaderboard"
+        activePage="home"
         secondaryNav={
           <div className="leaderboard-nav-secondary">
             <div className="leaderboard-tabs">

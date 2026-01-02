@@ -17,25 +17,28 @@
 
 .leaderboard-nav-content {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
     height: 45px;
 }
 
 .leaderboard-nav-left {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 24px;
+    height: 100%;
 }
 
 .leaderboard-nav-links {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 0;
+    height: 100%;
 }
 
 .leaderboard-nav-button {
-    padding: 12px 14px;
+    padding: 0 14px;
+    height: 100%;
     font-size: 13px;
     font-weight: 400;
     text-transform: uppercase;
@@ -49,19 +52,23 @@
     align-items: center;
     gap: 6px;
     font-family: inherit;
-}
-
-.leaderboard-nav-button:hover {
-    background-color: #333;
-    color: #fff;
+    box-sizing: border-box;
 }
 
 .leaderboard-nav-button.active {
     color: #bababa;
 }
 
+.leaderboard-nav-button:hover {
+    color: #fff;
+}
+
 .leaderboard-nav-button.gray {
     color: #8a8a8a;
+}
+
+.leaderboard-nav-button.gray:hover {
+    color: #fff;
 }
 
 .leaderboard-nav-button.blue {
@@ -69,21 +76,35 @@
     color: white;
     border-radius: 3px;
     margin-left: 8px;
+    height: 32px;
+    align-self: center;
+    padding: 0 16px;
 }
 
 .leaderboard-nav-button.blue:hover {
     background-color: #0077ee;
 }
 
+.leaderboard-nav-button.gold {
+    color: #ffaa00;
+    font-weight: 500;
+}
+
+.leaderboard-nav-button.gold:hover {
+    color: #ffcc33;
+}
+
 .leaderboard-nav-icon {
     width: 14px;
     height: 14px;
+    color: inherit;
+    transition: color 0.2s;
 }
 
-/* Play Dropdown */
 .play-dropdown-container {
     position: relative;
-    display: inline-block;
+    display: flex;
+    align-items: stretch;
 }
 
 .play-dropdown-container .leaderboard-nav-button {
@@ -103,7 +124,7 @@
     left: 0;
     min-width: 200px;
     background-color: #2a2a2a;
-    border: 1px solid #3a3a3a;
+    border: none;
     border-top: none;
     border-left: 3px solid #0066cc;
     border-radius: 0 0 2px 2px;
@@ -125,7 +146,9 @@
 }
 
 .play-dropdown-item {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
     padding: 12px 16px;
     font-size: 14px;
@@ -141,6 +164,26 @@
 .play-dropdown-item:hover {
     background-color: #333;
     color: #fff;
+}
+
+/* User Dropdown - Right-aligned with border on right */
+.user-dropdown-container .leaderboard-nav-button {
+    transition: background-color 0.15s;
+    text-transform: none;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+.user-dropdown-container:hover .leaderboard-nav-button,
+.user-dropdown-container.active .leaderboard-nav-button {
+    background-color: #2a2a2a !important;
+    color: #fff;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+.user-dropdown-container .play-dropdown-menu {
+    border: none !important;
 }
 
 /* Secondary Nav - Tabs (reusable structure) */
