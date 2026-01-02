@@ -210,7 +210,7 @@
   gap: 2px;
 }
 
-.profile-service-text > div:first-child {
+.profile-service-text>div:first-child {
   font-size: 12px;
   color: #8a8a8a;
   text-transform: uppercase;
@@ -433,7 +433,8 @@
 
 .profile-status-label {
   font-size: 15px;
-  color: #fff; /* White color to make online status more prominent */
+  color: #fff;
+  /* White color to make online status more prominent */
   font-weight: 500;
 }
 
@@ -516,13 +517,13 @@
 
 .match-route {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: normal;
   color: #fff;
 }
 
 .match-stat-value {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: normal;
   color: #bababa;
 }
 

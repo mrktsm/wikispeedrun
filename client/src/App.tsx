@@ -5,6 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
+import { AuthProvider } from "./contexts/AuthContext";
 import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
 import RaceLobby from "./pages/RaceLobby";
@@ -99,9 +100,8 @@ function AppRoutes() {
         </div>
       )}
       <div
-        className={`page-transition ${
-          transitionStage === "entering" ? enteringClass : ""
-        }`}
+        className={`page-transition ${transitionStage === "entering" ? enteringClass : ""
+          }`}
       >
         <Routes location={displayLocation}>
           <Route path="/" element={<Leaderboard />} />
@@ -119,9 +119,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   );
 }
 

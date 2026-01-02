@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import Navbar from "../components/Navbar";
 import { FaWikipediaW } from "react-icons/fa";
 import "./Auth.css";
@@ -7,15 +9,70 @@ import "../pages/Leaderboard.css";
 type AuthMode = "login" | "register";
 
 function Auth() {
+  const navigate = useNavigate();
+  const { signIn, signUp, updateUsername } = useAuth();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual auth logic
-    console.log("Auth submitted:", { mode, email, password });
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (mode === "register") {
+        // Validate passwords match
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+
+        // Validate username
+        if (username.length < 3) {
+          setError("Username must be at least 3 characters");
+          setLoading(false);
+          return;
+        }
+        if (username.length > 20) {
+          setError("Username must be 20 characters or less");
+          setLoading(false);
+          return;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          setError("Username can only contain letters, numbers, and underscores");
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await signUp(email, password);
+        if (error) {
+          setError(error.message);
+        } else {
+          // Save username after successful sign-up
+          await updateUsername(username);
+          // Redirect to home
+          navigate("/");
+        }
+      } else {
+        const { error } = await signIn(email, password);
+        if (error) {
+          setError(error.message);
+        } else {
+          // Redirect to home on successful login
+          navigate("/");
+        }
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleWikipediaSignIn = () => {
@@ -44,6 +101,23 @@ function Auth() {
           <h1 className="auth-title">{title}</h1>
 
           <form className="auth-form" onSubmit={handleSubmit}>
+            {!isLogin && (
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="username">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  className="auth-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="off"
+                  required
+                />
+              </div>
+            )}
+
             <div className="auth-field">
               <label className="auth-label" htmlFor="email">
                 Email Address
@@ -58,7 +132,6 @@ function Auth() {
                 required
               />
             </div>
-
 
             <div className="auth-field">
               <label className="auth-label" htmlFor="password">
@@ -113,8 +186,22 @@ function Auth() {
               </div>
             )}
 
-            <button type="submit" className="auth-submit-btn">
-              {buttonText}
+            {error && (
+              <div className="auth-error" style={{
+                padding: '12px',
+                backgroundColor: error.includes('Check your email') ? '#22c55e20' : '#ef444420',
+                border: `1px solid ${error.includes('Check your email') ? '#22c55e' : '#ef4444'}`,
+                borderRadius: '4px',
+                color: error.includes('Check your email') ? '#22c55e' : '#ef4444',
+                fontSize: '13px',
+                marginBottom: '16px'
+              }}>
+                {error}
+              </div>
+            )}
+
+            <button type="submit" className="auth-submit-btn" disabled={loading}>
+              {loading ? 'Loading...' : buttonText}
             </button>
           </form>
 
