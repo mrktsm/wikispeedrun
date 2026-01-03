@@ -35,6 +35,7 @@ type Message struct {
 type Room struct {
 	ID           string             `json:"id"`
 	Players      map[string]*Player `json:"players"`
+	HostID       string             `json:"hostId"` // ID of the player who created the room
 	StartArticle string             `json:"startArticle"`
 	EndArticle   string             `json:"endArticle"`
 	Started      bool               `json:"started"`
@@ -140,6 +141,7 @@ func (h *Hub) handleJoinRoom(client *Client, payload json.RawMessage) {
 		room = &Room{
 			ID:           p.RoomID,
 			Players:      make(map[string]*Player),
+			HostID:       client.id, // First player is the host
 			StartArticle: p.StartArticle,
 			EndArticle:   p.EndArticle,
 			Started:      false,
@@ -497,3 +499,69 @@ func mustMarshal(v interface{}) json.RawMessage {
 	return data
 }
 
+// LobbyInfo represents a lobby for the browser list
+type LobbyInfo struct {
+	ID           string `json:"id"`
+	Code         string `json:"code"`
+	HostName     string `json:"hostName"`
+	HostCountry  string `json:"hostCountry"`
+	StartArticle string `json:"startArticle"`
+	EndArticle   string `json:"endArticle"`
+	Players      int    `json:"players"`
+	MaxPlayers   int    `json:"maxPlayers"`
+	Status       string `json:"status"`
+}
+
+// GetLobbies returns a list of all public, non-started rooms
+func (h *Hub) GetLobbies() []LobbyInfo {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	lobbies := make([]LobbyInfo, 0)
+
+	for id, room := range h.rooms {
+		room.mu.RLock()
+		playerCount := len(room.Players)
+
+		// Find the host (first player, or use hostId)
+		hostName := "Unknown"
+		hostCountry := "US"
+		for _, player := range room.Players {
+			if room.HostID == player.ID {
+				hostName = player.Name
+				break
+			}
+		}
+		// If no host found by ID, use first player
+		if hostName == "Unknown" && playerCount > 0 {
+			for _, player := range room.Players {
+				hostName = player.Name
+				break
+			}
+		}
+
+		status := "waiting"
+		if room.Started {
+			status = "in_progress"
+		}
+
+		room.mu.RUnlock()
+
+		// Include all rooms that have players (both waiting and in progress)
+		if playerCount > 0 {
+			lobbies = append(lobbies, LobbyInfo{
+				ID:           id,
+				Code:         id, // Using room ID as the code
+				HostName:     hostName,
+				HostCountry:  hostCountry,
+				StartArticle: room.StartArticle,
+				EndArticle:   room.EndArticle,
+				Players:      playerCount,
+				MaxPlayers:   8,
+				Status:       status,
+			})
+		}
+	}
+
+	return lobbies
+}

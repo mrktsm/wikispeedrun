@@ -18,166 +18,66 @@ interface Lobby {
   status: "waiting" | "in_progress" | "starting";
 }
 
+// Get API URL from environment variable, fallback to localhost
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 const LobbyBrowser = () => {
   const navigate = useNavigate();
   const [selectedLobby, setSelectedLobby] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [modeFilter, setModeFilter] = useState("all");
+  const [lobbies, setLobbies] = useState<Lobby[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - will be replaced with WebSocket/API data
-  const [lobbies] = useState<Lobby[]>([
-    {
-      id: "1",
-      code: "ABC123",
-      hostName: "WikiMaster",
-      hostCountry: "US",
-      startArticle: "Cat",
-      endArticle: "Dog",
-      mode: "First to Finish",
-      players: 3,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "2",
-      code: "XYZ789",
-      hostName: "LinkRunner",
-      hostCountry: "GB",
-      startArticle: "Apple",
-      endArticle: "Banana",
-      mode: "Best of 3",
-      players: 5,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "3",
-      code: "DEF456",
-      hostName: "SpeedClicker",
-      hostCountry: "DE",
-      startArticle: "JavaScript",
-      endArticle: "Python",
-      mode: "Fewest Clicks",
-      players: 2,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "4",
-      code: "GHI321",
-      hostName: "WikiPro",
-      hostCountry: "CA",
-      startArticle: "Moon",
-      endArticle: "Sun",
-      mode: "First to Finish",
-      players: 7,
-      maxPlayers: 8,
-      status: "starting",
-    },
-    {
-      id: "5",
-      code: "JKL654",
-      hostName: "ArticleHunter",
-      hostCountry: "AU",
-      startArticle: "Pizza",
-      endArticle: "Italy",
-      mode: "First to Finish",
-      players: 4,
-      maxPlayers: 8,
-      status: "in_progress",
-    },
-    {
-      id: "6",
-      code: "MNO987",
-      hostName: "PathFinder",
-      hostCountry: "FR",
-      startArticle: "Paris",
-      endArticle: "London",
-      mode: "First to Finish",
-      players: 1,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "7",
-      code: "PQR654",
-      hostName: "WikiWizard",
-      hostCountry: "JP",
-      startArticle: "Sushi",
-      endArticle: "Tokyo",
-      mode: "Best of 3",
-      players: 6,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "8",
-      code: "STU321",
-      hostName: "ArticleAce",
-      hostCountry: "BR",
-      startArticle: "Football",
-      endArticle: "World Cup",
-      mode: "Fewest Clicks",
-      players: 2,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "9",
-      code: "VWX789",
-      hostName: "LinkLegend",
-      hostCountry: "KR",
-      startArticle: "K-Pop",
-      endArticle: "Seoul",
-      mode: "First to Finish",
-      players: 8,
-      maxPlayers: 8,
-      status: "starting",
-    },
-    {
-      id: "10",
-      code: "YZA456",
-      hostName: "WikiWarrior",
-      hostCountry: "ES",
-      startArticle: "Flamenco",
-      endArticle: "Spain",
-      mode: "Best of 3",
-      players: 3,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "11",
-      code: "BCD123",
-      hostName: "SpeedRacer",
-      hostCountry: "IT",
-      startArticle: "Pasta",
-      endArticle: "Rome",
-      mode: "First to Finish",
-      players: 1,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-    {
-      id: "12",
-      code: "EFG789",
-      hostName: "PathMaster",
-      hostCountry: "NL",
-      startArticle: "Tulips",
-      endArticle: "Amsterdam",
-      mode: "Fewest Clicks",
-      players: 4,
-      maxPlayers: 8,
-      status: "waiting",
-    },
-  ]);
+  // Fetch lobbies from server
+  const fetchLobbies = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/lobbies`);
+      if (response.ok) {
+        const data = await response.json();
+        // Map server data to our Lobby interface
+        const mappedLobbies: Lobby[] = data.map((lobby: {
+          id: string;
+          code: string;
+          hostName: string;
+          hostCountry: string;
+          startArticle: string;
+          endArticle: string;
+          players: number;
+          maxPlayers: number;
+          status: string;
+        }) => ({
+          ...lobby,
+          mode: "First to Finish", // Default mode since server doesn't track this yet
+          status: lobby.status as Lobby["status"],
+        }));
+        setLobbies(mappedLobbies);
+      }
+    } catch (error) {
+      console.error("Failed to fetch lobbies:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initial fetch and polling
+  useEffect(() => {
+    fetchLobbies();
+
+    // Poll every 5 seconds
+    const pollInterval = setInterval(fetchLobbies, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [fetchLobbies]);
 
   const getCountryFlagUrl = (countryCode: string) => {
     return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
   };
 
   const handleCreateLobby = () => {
-    navigate("/race-lobby");
+    // Generate a random lobby code
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    navigate(`/race-lobby?code=${code}`);
   };
 
   const handleQuickMatch = () => {
@@ -188,7 +88,7 @@ const LobbyBrowser = () => {
     if (availableLobby) {
       navigate(`/race-lobby?code=${availableLobby.code}`);
     } else {
-      navigate("/race-lobby");
+      handleCreateLobby();
     }
   };
 
@@ -208,8 +108,8 @@ const LobbyBrowser = () => {
   };
 
   const handleRefresh = () => {
-    // Will refresh lobby list from server
-    console.log("Refreshing lobbies...");
+    setIsLoading(true);
+    fetchLobbies();
   };
 
   const filteredLobbies = lobbies.filter((lobby) => {
@@ -473,15 +373,6 @@ const LobbyBrowser = () => {
                         </td>
                       </tr>
                     ))}
-                    {filteredLobbies.length === 0 && (
-                      <tr className="empty-row">
-                        <td colSpan={5}>
-                          <span className="empty-message">
-                            No lobbies found. Create one!
-                          </span>
-                        </td>
-                      </tr>
-                    )}
                     {/* Empty placeholder rows to fill space */}
                     {Array.from({ length: placeholderCount }).map(
                       (_, index) => {

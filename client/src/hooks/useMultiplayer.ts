@@ -32,6 +32,7 @@ export interface Player {
 export interface RoomState {
   id: string;
   players: Record<string, Player>;
+  hostId: string;
   startArticle: string;
   endArticle: string;
   started: boolean;
@@ -70,12 +71,12 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const optionsRef = useRef(options);
   const handleMessageRef = useRef<((message: WebSocketMessage) => void) | null>(null);
-  
+
   // Keep options ref updated
   useEffect(() => {
     optionsRef.current = options;
@@ -85,7 +86,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
   const handleMessage = useCallback((message: WebSocketMessage) => {
     const { type, payload } = message;
     console.log("Received message:", type, payload);
-    
+
     switch (type) {
       case MessageTypes.ROOM_STATE: {
         const state = payload as RoomState;
@@ -96,7 +97,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
         setPlayers(playerList);
         break;
       }
-      
+
       case MessageTypes.PLAYER_JOINED: {
         const player = payload as Player;
         console.log("Player joined:", player);
@@ -107,7 +108,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
         } : null);
         break;
       }
-      
+
       case MessageTypes.PLAYER_LEFT: {
         const { playerId } = payload as { playerId: string };
         console.log("Player left:", playerId);
@@ -119,7 +120,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
         });
         break;
       }
-      
+
       case MessageTypes.RACE_STARTED: {
         const data = payload as { startArticle: string; endArticle: string };
         console.log("Race started:", data);
@@ -127,35 +128,35 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
         optionsRef.current.onRaceStarted?.(data);
         break;
       }
-      
+
       case MessageTypes.PLAYER_UPDATE: {
         const data = payload as { playerId: string; currentArticle: string; clicks: number };
-        setPlayers(prev => prev.map(p => 
-          p.id === data.playerId 
+        setPlayers(prev => prev.map(p =>
+          p.id === data.playerId
             ? { ...p, currentArticle: data.currentArticle, clicks: data.clicks }
             : p
         ));
         optionsRef.current.onPlayerUpdate?.(data);
         break;
       }
-      
+
       case MessageTypes.PLAYER_FINISH: {
         const data = payload as { playerId: string; playerName: string; time: number; clicks: number; path: string[] };
-        setPlayers(prev => prev.map(p => 
-          p.id === data.playerId 
+        setPlayers(prev => prev.map(p =>
+          p.id === data.playerId
             ? { ...p, finished: true, finishTime: data.time }
             : p
         ));
         optionsRef.current.onPlayerFinish?.(data);
         break;
       }
-      
+
       case MessageTypes.CURSOR_UPDATE: {
         const data = payload as CursorUpdate;
         optionsRef.current.onCursorUpdate?.(data);
         break;
       }
-      
+
       case MessageTypes.ERROR: {
         const { error: errorMsg } = payload as { error: string };
         console.error("Server error:", errorMsg);
@@ -173,8 +174,8 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
 
   const connect = useCallback(() => {
     // Don't connect if already connected or connecting
-    if (wsRef.current?.readyState === WebSocket.OPEN || 
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
+    if (wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING) {
       console.log("WebSocket already connected/connecting, skipping");
       return;
     }
@@ -198,7 +199,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
           wsRef.current = null;
         }
       }, 100);
-      
+
       // Don't auto-reconnect - let the component handle reconnection
       // This prevents multiple connections fighting each other
     };
@@ -305,7 +306,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
     roomState,
     players,
     error,
-    
+
     // Actions
     connect,
     disconnect,

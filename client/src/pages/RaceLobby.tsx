@@ -5,6 +5,7 @@ import {
   useMultiplayer,
   type Player as MultiplayerPlayer,
 } from "../hooks/useMultiplayer";
+import { useAuth } from "../contexts/AuthContext";
 import ProfilePopover from "../components/ProfilePopover";
 import Navbar from "../components/Navbar";
 import "./RaceLobby.css";
@@ -17,15 +18,14 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-// Generate random player name - cached in sessionStorage to survive page transitions
-function getOrCreatePlayerName(): string {
+// Generate a guest player name using a partial UUID for uniqueness
+function getOrCreateGuestName(): string {
   const stored = sessionStorage.getItem("wiki-race-player-name");
   if (stored) return stored;
 
-  const adjectives = ["Swift", "Quick", "Clever", "Wiki", "Speed", "Link"];
-  const nouns = ["Runner", "Racer", "Master", "Hunter", "Crawler", "Finder"];
-  const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]
-    }${Math.floor(Math.random() * 100)}`;
+  // Generate a "Guest" + 6 character UUID suffix (e.g., "Guest1a2b3c")
+  const uuid = crypto.randomUUID().replace(/-/g, "").substring(0, 6);
+  const name = `Guest${uuid}`;
 
   sessionStorage.setItem("wiki-race-player-name", name);
   return name;
@@ -34,10 +34,20 @@ function getOrCreatePlayerName(): string {
 const RaceLobby = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
 
   // Get lobby code from URL or use default test lobby
   const [lobbyCode] = useState(() => searchParams.get("code") || "TEST01");
-  const [playerName] = useState(() => getOrCreatePlayerName());
+
+  // Determine player name: use logged-in user's nickname, or generate a guest name
+  const [playerName] = useState(() => {
+    // If user is logged in and has a nickname, use it
+    if (user?.user_metadata?.nickname) {
+      return user.user_metadata.nickname as string;
+    }
+    // Otherwise, generate or retrieve a guest name
+    return getOrCreateGuestName();
+  });
 
   const [startArticle, setStartArticle] = useState("Cat");
   const [endArticle, setEndArticle] = useState("Dog");
@@ -47,6 +57,7 @@ const RaceLobby = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [hasJoined, setHasJoined] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   // Add system message to activity feed - defined first so it can be used in hooks
   const addSystemMessage = useCallback((text: string) => {
@@ -171,13 +182,12 @@ const RaceLobby = () => {
   // Convert multiplayer players to display format
   // If no players from server, show self as fallback
   const serverPlayers = multiplayerPlayers.map(
-    (p: MultiplayerPlayer, index: number) => ({
+    (p: MultiplayerPlayer) => ({
       id: p.id,
       name: p.name,
-      isHost: index === 0, // First player is host
+      isHost: roomState?.hostId === p.id, // Check if this player is the host
       isReady: true,
-      country: "US", // Default for now
-      rating: 1500 + Math.floor(Math.random() * 500), // Mock rating
+      country: "US", // Default for other players (will be from server eventually)
       gamesPlayed: Math.floor(Math.random() * 50),
       bestTime: "-",
     })
@@ -193,16 +203,16 @@ const RaceLobby = () => {
           name: playerName,
           isHost: true,
           isReady: true,
-          country: "US",
-          rating: 1650,
+          country: (user?.user_metadata?.country as string) || "US",
           gamesPlayed: 0,
           bestTime: "-",
         },
       ];
 
-  // Am I the host? (first player in the list)
-  const isHost =
-    displayPlayers.length > 0 && displayPlayers[0]?.name === playerName;
+  // Am I the host? Check against the server's hostId
+  // Use player ID from the room state if available, otherwise check if we're the only player
+  const myPlayerId = multiplayerPlayers.find(p => p.name === playerName)?.id;
+  const isHost = roomState?.hostId ? roomState.hostId === myPlayerId : displayPlayers.length > 0 && displayPlayers[0]?.name === playerName;
 
   const maxPlayers = 8;
   const emptySlots = maxPlayers - displayPlayers.length;
@@ -244,18 +254,33 @@ const RaceLobby = () => {
     setChatInput("");
   };
 
-  // Start the race (anyone can start for testing)
+  // Start the race with countdown
   const handleStartRace = () => {
-    addSystemMessage("Starting race...");
-    startRace();
-    // Also navigate locally in case server doesn't respond
-    setTimeout(() => {
-      navigate(
-        `/game?start=${encodeURIComponent(
-          startArticle
-        )}&end=${encodeURIComponent(endArticle)}&mode=race&lobby=${lobbyCode}`
-      );
-    }, 500);
+    if (countdown !== null) return; // Already counting down
+
+    addSystemMessage("Starting countdown...");
+    setCountdown(3);
+
+    // Countdown: 3 -> 2 -> 1 -> start
+    let count = 3;
+    const countdownInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        setCountdown(count);
+      } else {
+        // Time to start
+        clearInterval(countdownInterval);
+        setCountdown(null);
+        startRace();
+        navigate(
+          `/game?start=${encodeURIComponent(
+            startArticle
+          )}&end=${encodeURIComponent(endArticle)}&mode=race&lobby=${lobbyCode}&player=${encodeURIComponent(
+            playerName
+          )}`
+        );
+      }
+    }, 1000);
   };
 
   return (
@@ -274,7 +299,9 @@ const RaceLobby = () => {
             <div className="race-lobby-card">
               <div className="race-lobby-card-body">
                 <div className="profile-row">
-                  <div className="profile-avatar-placeholder"></div>
+                  <div className="profile-avatar-placeholder">
+                    {playerName.charAt(0).toUpperCase()}
+                  </div>
                   <div className="profile-info">
                     <div className="profile-name">{playerName}</div>
                     <div className="profile-stats">
@@ -385,7 +412,6 @@ const RaceLobby = () => {
                           </span>
                         </div>
                       </th>
-                      <th className="text-right">Rating</th>
                       <th className="text-right">Status</th>
                     </tr>
                   </thead>
@@ -407,7 +433,7 @@ const RaceLobby = () => {
                             <ProfilePopover
                               name={player.name}
                               country={player.country}
-                              rating={player.rating}
+                              rating={1500}
                               gamesPlayed={player.gamesPlayed}
                               bestTime={player.bestTime}
                             >
@@ -417,11 +443,6 @@ const RaceLobby = () => {
                               </span>
                             </ProfilePopover>
                           </div>
-                        </td>
-                        <td className="text-right">
-                          <span className="leaderboard-rating">
-                            {player.rating}
-                          </span>
                         </td>
                         <td className="text-right">
                           {player.isHost && (
@@ -451,11 +472,6 @@ const RaceLobby = () => {
                               Open slot
                             </span>
                           </div>
-                        </td>
-                        <td className="text-right">
-                          <span className="leaderboard-rating empty-rating">
-                            —
-                          </span>
                         </td>
                         <td className="text-right">
                           <span className="player-status-waiting">
@@ -516,8 +532,11 @@ const RaceLobby = () => {
               <button
                 className="race-action-btn start-btn"
                 onClick={handleStartRace}
+                disabled={!isHost || countdown !== null}
               >
-                Start
+                {countdown !== null
+                  ? `Game starts in ${countdown}...`
+                  : (isHost ? "Start" : "Waiting for Host...")}
               </button>
             </div>
           </div>
