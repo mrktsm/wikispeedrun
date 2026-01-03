@@ -1191,6 +1191,7 @@ const Game = () => {
         <SpeedrunWidget
           ref={speedrunWidgetRef}
           gameMode={isMultiplayer ? "Race" : "Single Player"}
+          startArticle={startArticle}
           endArticle={endArticle}
           isRunning={articleLoaded && hudVisible}
           isStopped={routeCompleted}

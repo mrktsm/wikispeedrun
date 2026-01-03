@@ -11,6 +11,7 @@ const (
 	MsgTypeJoinRoom      = "join_room"
 	MsgTypeRejoinRoom    = "rejoin_room"
 	MsgTypeLeaveRoom     = "leave_room"
+	MsgTypeUpdateRoom    = "update_room"
 	MsgTypeStartRace     = "start_race"
 	MsgTypeNavigate      = "navigate"
 	MsgTypeFinish        = "finish"
@@ -105,6 +106,8 @@ func (h *Hub) HandleMessage(client *Client, msg Message) {
 		h.handleRejoinRoom(client, msg.Payload)
 	case MsgTypeLeaveRoom:
 		h.handleLeaveRoom(client)
+	case MsgTypeUpdateRoom:
+		h.handleUpdateRoom(client, msg.Payload)
 	case MsgTypeStartRace:
 		h.handleStartRace(client)
 	case MsgTypeNavigate:
@@ -267,6 +270,52 @@ func (h *Hub) handleRejoinRoom(client *Client, payload json.RawMessage) {
 		Type:    MsgTypeRoomState,
 		Payload: mustMarshal(room),
 	})
+}
+
+type UpdateRoomPayload struct {
+	StartArticle string `json:"startArticle"`
+	EndArticle   string `json:"endArticle"`
+}
+
+func (h *Hub) handleUpdateRoom(client *Client, payload json.RawMessage) {
+	var p UpdateRoomPayload
+	if err := json.Unmarshal(payload, &p); err != nil {
+		client.sendError("Invalid update payload")
+		return
+	}
+
+	h.mu.RLock()
+	room, exists := h.rooms[client.roomID]
+	h.mu.RUnlock()
+
+	if !exists {
+		client.sendError("Room not found")
+		return
+	}
+
+	// Only host can update room settings
+	if room.HostID != client.id {
+		client.sendError("Only host can update room settings")
+		return
+	}
+
+	// Don't allow updates after race has started
+	room.mu.Lock()
+	if room.Started {
+		room.mu.Unlock()
+		client.sendError("Cannot update room after race has started")
+		return
+	}
+
+	// Update room settings
+	room.StartArticle = p.StartArticle
+	room.EndArticle = p.EndArticle
+	room.mu.Unlock()
+
+	log.Printf("Room %s updated: %s -> %s", room.ID, p.StartArticle, p.EndArticle)
+
+	// Broadcast updated room state to all players
+	h.broadcastRoomState(room)
 }
 
 func (h *Hub) handleStartRace(client *Client) {

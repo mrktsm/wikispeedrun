@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import DOMPurify from "dompurify";
 import "./WikipediaViewer.css";
 
-interface WikiApiArticle {
+export interface WikiApiArticle {
   parse?: {
     title?: string;
     pageid?: number;
@@ -13,19 +13,19 @@ interface WikiApiArticle {
   };
 }
 
-const getArticleData = async (language: string, title: string) => {
+export const getArticleData = async (language: string, title: string) => {
   if (!title) return null;
 
   const resp = await fetch(
     `https://${language}.wikipedia.org/w/api.php?` +
-      new URLSearchParams({
-        page: title,
-        origin: "*",
-        action: "parse",
-        format: "json",
-        disableeditsection: "true",
-        redirects: "true",
-      }).toString()
+    new URLSearchParams({
+      page: title,
+      origin: "*",
+      action: "parse",
+      format: "json",
+      disableeditsection: "true",
+      redirects: "true",
+    }).toString()
   );
   return resp.json() as Promise<WikiApiArticle>;
 };
@@ -52,10 +52,10 @@ const WikipediaViewer = ({
   const [articleTitle, setArticleTitle] = useState(initialTitle);
   const [language, setLanguage] = useState("en");
   const queryClient = useQueryClient();
-  
+
   // Keep track of currently DISPLAYED article (separate from fetching state)
   const [displayedArticle, setDisplayedArticle] = useState<WikiApiArticle | null>(null);
-  
+
   // Track hover state for preloading
   const hoverTimeoutRef = useRef<number | null>(null);
   const preloadedLinksRef = useRef<Set<string>>(new Set());
@@ -68,7 +68,7 @@ const WikipediaViewer = ({
     staleTime: 5 * 60 * 1000, // Cache articles for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
-  
+
   // Update displayed article only when new data is ready
   useEffect(() => {
     if (data && !isFetching && data.parse?.text) {
@@ -99,38 +99,38 @@ const WikipediaViewer = ({
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLanguage(e.target.value);
   };
-  
+
   // Handle mouse movement for link preloading
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const link = target.closest("a");
-    
+
     // Clear previous timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
     }
-    
+
     if (!link) return;
-    
+
     const href = link.getAttribute("href");
     if (!href || !href.startsWith("/wiki/")) return;
-    
+
     const linkTitle = decodeURIComponent(href.replace("/wiki/", ""));
-    
+
     // Skip special pages
     if (linkTitle.includes(":")) return;
-    
+
     // Debounce hover events (only preload if hovering for 150ms)
     hoverTimeoutRef.current = setTimeout(() => {
       if (href && href.startsWith("/wiki/")) {
         const title = decodeURIComponent(href.replace("/wiki/", ""));
-        
+
         // Skip special pages and already preloaded links
         if (!title.includes(":") && !preloadedLinksRef.current.has(title)) {
           console.log(`[Preload] Hover-prefetching: ${title}`);
           preloadedLinksRef.current.add(title);
-          
+
           // Prefetch the article
           queryClient.prefetchQuery({
             queryKey: ["article", title, language],
@@ -141,7 +141,7 @@ const WikipediaViewer = ({
       }
     }, 150);
   };
-  
+
   // Cleanup hover timeout on unmount
   useEffect(() => {
     return () => {
@@ -150,27 +150,27 @@ const WikipediaViewer = ({
       }
     };
   }, []);
-  
+
   // Performance: Lazy load images and async decoding
   useEffect(() => {
     if (!displayedArticle) return;
-    
+
     const images = document.querySelectorAll('.wiki-content img');
     images.forEach((img) => {
       img.setAttribute('loading', 'lazy');
       img.setAttribute('decoding', 'async');
     });
   }, [displayedArticle]);
-  
+
   // Performance: Preload first 5 article links immediately (high probability of being clicked)
   useEffect(() => {
     if (!displayedArticle) return;
-    
+
     // Wait a bit for DOM to settle, then preload top links
     const timeoutId = setTimeout(() => {
       const links = document.querySelectorAll('.wiki-content a[href^="/wiki/"]');
       const topLinks = Array.from(links).slice(0, 5);
-      
+
       topLinks.forEach((link) => {
         const href = link.getAttribute('href');
         if (href) {
@@ -187,10 +187,10 @@ const WikipediaViewer = ({
         }
       });
     }, 500);
-    
+
     return () => clearTimeout(timeoutId);
   }, [displayedArticle, language, queryClient]);
-  
+
   // Performance: Memoize DOMPurify sanitization (expensive operation)
   const sanitizedHTML = useMemo(() => {
     if (!displayedArticle?.parse?.text?.["*"]) return '';

@@ -5,6 +5,7 @@ export const MessageTypes = {
   JOIN_ROOM: "join_room",
   REJOIN_ROOM: "rejoin_room",
   LEAVE_ROOM: "leave_room",
+  UPDATE_ROOM: "update_room",
   START_RACE: "start_race",
   NAVIGATE: "navigate",
   FINISH: "finish",
@@ -260,6 +261,10 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
     sendMessage(MessageTypes.START_RACE, {});
   }, [sendMessage]);
 
+  const updateRoom = useCallback((startArticle: string, endArticle: string) => {
+    sendMessage(MessageTypes.UPDATE_ROOM, { startArticle, endArticle });
+  }, [sendMessage]);
+
   const sendNavigate = useCallback((article: string) => {
     sendMessage(MessageTypes.NAVIGATE, { article });
   }, [sendMessage]);
@@ -313,6 +318,7 @@ export function useMultiplayer(options: UseMultiplayerOptions = {}) {
     joinRoom,
     rejoinRoom,
     leaveRoom,
+    updateRoom,
     startRace,
     sendNavigate,
     sendFinish,
