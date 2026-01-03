@@ -23,10 +23,7 @@ interface MultiplayerFinishData {
   path: string[];
 }
 
-// Module-level flags to prevent multiple Game instances from fighting
-// (happens during page transitions with dual Routes blocks)
-let globalConnectionAttempted = false;
-let globalRejoinAttempted = false;
+
 
 // Module-level cached icon HTML (persists across re-renders)
 let cachedPointerIconHTML: string | null = null;
@@ -623,34 +620,9 @@ const Game = () => {
         return;
       }
 
-      // Check if another player just arrived at our current article
       const myArticle = currentArticleRef.current;
       if (myArticle && myArticle !== startArticle && data.currentArticle === myArticle) {
-        // Get the player's name from the ref (since players state might not be updated yet)
-        const playerName = playerNamesRef.current.get(data.playerId);
-        if (playerName) {
-          // Check if we've already met this player at this article
-          let meetingLocations = seenMeetingsRef.current.get(data.playerId);
-          if (!meetingLocations) {
-            meetingLocations = new Set<string>();
-            seenMeetingsRef.current.set(data.playerId, meetingLocations);
-          }
-
-          if (!meetingLocations.has(myArticle)) {
-            console.log(`[Notification via onPlayerUpdate] ${playerName} arrived at ${myArticle}`);
-            meetingLocations.add(myArticle);
-
-            // Show the notification
-            const playerColor = CURSOR_COLORS[hashStringToIndex(playerName)];
-            setShowNotification(false);
-            setTimeout(() => {
-              setNotificationPlayerName(playerName);
-              setNotificationPlayerColor(playerColor);
-              setNotificationType("same-page");
-              setShowNotification(true);
-            }, 50);
-          }
-        }
+        // Notification logic is handled in the robust useEffect at line ~680
       }
     },
   });
@@ -688,6 +660,8 @@ const Game = () => {
     prevArticleRef.current = myArticle;
 
     // Find other players on the same article as us
+
+
     const playersOnSamePage = players.filter(p =>
       p.id !== currentPlayerIdRef.current &&
       p.currentArticle === myArticle
@@ -725,39 +699,27 @@ const Game = () => {
     }
   }, [players, currentArticle, startArticle, isMultiplayer]);
 
-  // Connect to multiplayer - use global flag to prevent duplicate connections
-  // during page transitions (two Game components mount simultaneously)
+  // Connect to multiplayer
   useEffect(() => {
     if (!isMultiplayer || !lobbyCode || !playerName) {
       return;
     }
 
-    // Prevent duplicate connection attempts across all Game instances
-    if (globalConnectionAttempted) {
-      console.log("Connection already attempted by another Game instance, skipping");
-      return;
-    }
-    globalConnectionAttempted = true;
-
     console.log("Multiplayer game detected, connecting...");
     connect();
 
-    // Don't disconnect on cleanup - keep connection alive during page transitions
-    // The connection will be cleaned up when navigating away from the game
-  }, [isMultiplayer, lobbyCode, playerName, connect]);
+    // Cleanup connection on unmount
+    return () => {
+      console.log("Cleaning up multiplayer connection");
+      disconnect();
+    };
+  }, [isMultiplayer, lobbyCode, playerName, connect, disconnect]);
 
   // Rejoin the room after connecting to continue the race
   useEffect(() => {
     if (!isMultiplayer || !isConnected || !lobbyCode || !playerName) {
       return;
     }
-
-    // Prevent duplicate rejoin attempts across all Game instances
-    if (globalRejoinAttempted) {
-      console.log("Rejoin already attempted by another Game instance, skipping");
-      return;
-    }
-    globalRejoinAttempted = true;
 
     console.log("Rejoining room:", lobbyCode, "as", playerName);
     rejoinRoom(lobbyCode, playerName);
@@ -1117,10 +1079,6 @@ const Game = () => {
     // Clear race state when leaving the game
     sessionStorage.removeItem("wiki-race-started-at");
     sessionStorage.removeItem("wiki-race-player-name");
-
-    // Reset global connection flags
-    globalConnectionAttempted = false;
-    globalRejoinAttempted = false;
 
     // Disconnect from WebSocket
     disconnect();

@@ -238,11 +238,13 @@ func (h *Hub) handleRejoinRoom(client *Client, payload json.RawMessage) {
 
 		log.Printf("Player %s rejoined room %s", p.PlayerName, p.RoomID)
 
-		// Send current room state to the rejoining player
-		client.sendMessage(Message{
+		// Broadcast updated room state to ALL players so they know the player's new ID
+		// Run in a goroutine to avoid deadlock since we currently hold room.mu.Lock
+		// and broadcastToRoom needs to acquire room.mu.RLock
+		go h.broadcastToRoom(room, Message{
 			Type:    MsgTypeRoomState,
 			Payload: mustMarshal(room),
-		})
+		}, nil)
 		return
 	}
 
@@ -315,7 +317,10 @@ func (h *Hub) handleUpdateRoom(client *Client, payload json.RawMessage) {
 	log.Printf("Room %s updated: %s -> %s", room.ID, p.StartArticle, p.EndArticle)
 
 	// Broadcast updated room state to all players
-	h.broadcastRoomState(room)
+	h.broadcastToRoom(room, Message{
+		Type:    MsgTypeRoomState,
+		Payload: mustMarshal(room),
+	}, nil)
 }
 
 func (h *Hub) handleStartRace(client *Client) {
