@@ -50,7 +50,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
     ref
   ) => {
     const [currentTime, setCurrentTime] = useState("0:00.00");
-    
+
     // Truncate article names to max characters with ellipsis
     const truncateArticleName = (name: string, maxLength: number = 25): string => {
       const cleanName = name.replace(/_/g, " ");
@@ -257,21 +257,19 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
           {segments.map((segment, index) => (
             <div
               key={index}
-              className={`segment ${
-                segment.isCurrent ? "current-segment" : ""
-              }`}
+              className={`segment ${segment.isCurrent ? "current-segment" : ""
+                }`}
             >
               <div className="segment-name">{truncateArticleName(segment.name, 25)}</div>
               <div className="segment-times">
                 {segment.timeDiff && (
                   <span
-                    className={`time-diff ${
-                      segment.isAhead === true
+                    className={`time-diff ${segment.isAhead === true
                         ? "ahead"
                         : segment.isAhead === false
-                        ? "behind"
-                        : ""
-                    }`}
+                          ? "behind"
+                          : ""
+                      }`}
                   >
                     {segment.timeDiff}
                   </span>
@@ -288,7 +286,7 @@ const SpeedrunWidget = forwardRef<SpeedrunWidgetRef, SpeedrunWidgetProps>(
             length: Math.max(0, MAX_SEGMENTS - segments.length - 1),
           }).map((_, index) => (
             <div key={`empty-${index}`} className="segment">
-              <div className="segment-name"></div>
+              <div className="segment-name">&nbsp;</div>
               <div className="segment-times">
                 <span className="cumulative-time">-</span>
               </div>
