@@ -49,7 +49,7 @@ const VictoryModal = ({
   currentPlayerName,
   rank = 1,
   didFinish = true,
-  totalPlayers = 1,
+  totalPlayers: _totalPlayers = 1,
 }: VictoryModalProps) => {
   const [chatInput, setChatInput] = useState("");
   const initialPlayerId = players.find(p => p.name === currentPlayerName)?.id || players[0]?.id || null;

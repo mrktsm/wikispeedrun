@@ -51,7 +51,7 @@ const Game = () => {
   const [notificationPlayerName, setNotificationPlayerName] = useState("");
   const [notificationPlayerColor, setNotificationPlayerColor] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [mockPlayers, setMockPlayers] = useState<Player[]>([]);
+  const [mockPlayers, _setMockPlayers] = useState<Player[]>([]);
 
   // Notification tracking: Map of playerId -> Set of articles where we already met them
   // This tracks the actual "meeting location" so we don't re-notify for the same meeting

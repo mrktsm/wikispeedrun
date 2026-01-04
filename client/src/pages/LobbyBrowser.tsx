@@ -27,7 +27,7 @@ const LobbyBrowser = () => {
   const [joinCode, setJoinCode] = useState("");
   const [modeFilter, setModeFilter] = useState("all");
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
 
   // Fetch lobbies from server
