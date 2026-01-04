@@ -477,3 +477,13 @@
 .victory-chat-input:focus {
   border-color: #0066cc;
 }
+
+.victory-status-banner.is-finished {
+  color: #ffaa00;
+  /* Yellow/Orange */
+}
+
+.victory-status-banner.is-dnf {
+  color: #ff4444;
+  /* Red */
+}

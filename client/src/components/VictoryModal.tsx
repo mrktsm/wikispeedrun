@@ -30,6 +30,9 @@ interface VictoryModalProps {
   onNewRoute: () => void;
   onSendMessage: (text: string) => void;
   currentPlayerName: string;
+  rank?: number;
+  didFinish?: boolean;
+  totalPlayers?: number;
 }
 
 const VictoryModal = ({
@@ -44,6 +47,9 @@ const VictoryModal = ({
   onNewRoute,
   onSendMessage,
   currentPlayerName,
+  rank = 1,
+  didFinish = true,
+  totalPlayers = 1,
 }: VictoryModalProps) => {
   const [chatInput, setChatInput] = useState("");
   const initialPlayerId = players.find(p => p.name === currentPlayerName)?.id || players[0]?.id || null;
@@ -59,6 +65,29 @@ const VictoryModal = ({
     onSendMessage(chatInput);
     setChatInput("");
   };
+
+  // Helper to format rank (1st, 2nd, 3rd, etc.)
+  const formatRank = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  // Determine banner style and text
+  let bannerClass = "victory-status-banner";
+  let bannerIcon = <FaTrophy className="victory-status-icon" />;
+  let bannerText = "You Won This Match!";
+
+  if (!didFinish) {
+    bannerClass += " is-dnf"; // Red
+    bannerText = "Time's Up! You didn't finish.";
+    // You might want a different icon for DNF, e.g., FaClock or FaTimes
+  } else if (rank > 1) {
+    bannerClass += " is-finished"; // Yellow
+    bannerText = `You came in ${formatRank(rank)}!`;
+  } else {
+    bannerClass += " is-me"; // Green (Winner)
+  }
 
   // Format time for display
   const formatTime = (timeStr: string) => {
@@ -126,10 +155,10 @@ const VictoryModal = ({
   return (
     <div className="victory-overlay" onClick={onNewRoute}>
       <div className="victory-banner-row" onClick={(e) => e.stopPropagation()}>
-        <div className="victory-status-banner is-me">
+        <div className={bannerClass}>
           <div className="victory-status-left">
-            <FaTrophy className="victory-status-icon" />
-            <span className="victory-status-text">You Won This Match!</span>
+            {bannerIcon}
+            <span className="victory-status-text">{bannerText}</span>
           </div>
           <div className="victory-status-right">
             <span className="victory-status-meta">
@@ -261,7 +290,7 @@ const VictoryModal = ({
           </div>
         </div>
       </div>
-      
+
       <div className="victory-bottom-spacer"></div>
     </div>
   );

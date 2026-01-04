@@ -42,6 +42,8 @@ const Game = () => {
   } | null>(null);
   const [finishedPlayers, setFinishedPlayers] = useState<MultiplayerFinishData[]>([]);
   const [raceStartTime] = useState(() => Date.now());
+  const [raceEndedAt, setRaceEndedAt] = useState<number | null>(null); // Timestamp when first player finished
+  const [endGameCountdown, setEndGameCountdown] = useState(30); // Countdown for other players
   const [currentArticle, setCurrentArticle] = useState("");
   const [localClicks, setLocalClicks] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
@@ -74,67 +76,10 @@ const Game = () => {
     }
   }, [showNotification]);
 
-  // Countdown state
-  const [countdownSeconds, setCountdownSeconds] = useState(0);
+  // Countdown state - used by both the end-game countdown and any other countdown notifications
   const [showCountdown, setShowCountdown] = useState(false);
 
-  // Helper to start countdown test
-  const testCountdown = () => {
-    setCountdownSeconds(30);
-    setShowCountdown(true);
 
-    // Simulate countdown
-    const interval = setInterval(() => {
-      setCountdownSeconds(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setShowCountdown(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  // Test toggle for menu
-  const handleToggleMenu = () => {
-    if (!showVictoryModal) {
-      if (!gameStats) {
-        setGameStats({
-          finalTime: "1:05.23",
-          segments: [
-            { name: "Cat", time: "0:00.00", timeDiff: null },
-            { name: "Feline", time: "0:20.00", timeDiff: "+20.0" },
-            { name: "Pet", time: "0:40.00", timeDiff: "+20.0" },
-            { name: "Dog", time: "1:05.23", timeDiff: "+25.2" }
-          ]
-        });
-      }
-
-      // Add some mock players if testing
-      if (mockPlayers.length === 0) {
-        setMockPlayers([
-          { id: 'p1', name: playerName || "SwiftRunner42", currentArticle: 'Dog', clicks: 3, path: ['Cat', 'Feline', 'Pet', 'Dog'], finished: true, finishTime: 65230 },
-          { id: 'p2', name: 'WikiMaster', currentArticle: 'Dog', clicks: 5, path: ['Cat', 'Animal', 'Mammal', 'Pet', 'Dog'], finished: true, finishTime: 78450 },
-          { id: 'p3', name: 'SpeedyCrawler', currentArticle: 'Pet', clicks: 4, path: ['Cat', 'Domesticated', 'Pet'], finished: false },
-          { id: 'p4', name: 'LinkHunter', currentArticle: 'Cat', clicks: 1, path: ['Cat'], finished: false },
-        ]);
-      }
-
-      // Add some mock messages if testing
-      if (messages.length === 0) {
-        setMessages([
-          { id: '1', type: 'system', text: 'Race finished!', timestamp: new Date() },
-          { id: '2', type: 'chat', playerName: 'SwiftRunner42', text: 'GG everyone!', timestamp: new Date() },
-          { id: '3', type: 'chat', playerName: 'WikiMaster', text: 'That Dog article was tricky.', timestamp: new Date() },
-        ]);
-      }
-
-      setShowVictoryModal(true);
-    } else {
-      setShowVictoryModal(false);
-    }
-  };
 
   // Use ref for cursor data to avoid React re-renders on every cursor update
   const cursorDataRef = useRef<Map<string, CursorUpdate>>(new Map());
@@ -161,15 +106,20 @@ const Game = () => {
       return [...prev, data];
     });
 
-    // Show finish notification
-    const playerColor = CURSOR_COLORS[hashStringToIndex(data.playerName)];
-    setShowNotification(false);
-    setTimeout(() => {
-      setNotificationPlayerName(data.playerName);
-      setNotificationPlayerColor(playerColor);
-      setNotificationType("finish");
-      setShowNotification(true);
-    }, 50);
+    // Set raceEndedAt on first finish (triggers countdown for other players)
+    setRaceEndedAt(prevEnded => prevEnded === null ? Date.now() : prevEnded);
+
+    // Show finish notification (only for other players)
+    if (data.playerId !== currentPlayerIdRef.current) {
+      const playerColor = CURSOR_COLORS[hashStringToIndex(data.playerName)];
+      setShowNotification(false);
+      setTimeout(() => {
+        setNotificationPlayerName(data.playerName);
+        setNotificationPlayerColor(playerColor);
+        setNotificationType("finish");
+        setShowNotification(true);
+      }, 50);
+    }
   }, []);
 
   // Cache icon HTML to avoid re-rendering
@@ -380,13 +330,18 @@ const Game = () => {
     // Use ref to avoid stale closure issues
     const isOnSamePage = data.article === currentArticleRef.current;
 
-    // If not on the same page, hide/remove the cursor if it exists
+    // If not on the same page, fade out the cursor if it exists
     if (!isOnSamePage) {
       const container = cursorContainerRef.current;
       if (container) {
         const cursorEl = container.querySelector(`[data-player-id="${data.playerId}"]`) as HTMLElement;
-        if (cursorEl) {
-          cursorEl.style.display = 'none';
+        if (cursorEl && !cursorEl.classList.contains('fading')) {
+          // Start fade-out animation
+          cursorEl.classList.add('fading');
+          // After animation completes, hide fully
+          setTimeout(() => {
+            cursorEl.classList.add('hidden-cursor');
+          }, 500);
         }
       }
       return;
@@ -442,7 +397,8 @@ const Game = () => {
 
       container.appendChild(cursorEl);
     } else {
-      // Show cursor if it was previously hidden
+      // Show cursor if it was previously hidden/fading
+      cursorEl.classList.remove('fading', 'hidden-cursor');
       cursorEl.style.display = '';
     }
 
@@ -677,7 +633,8 @@ const Game = () => {
       }
 
       // Show notification if we haven't met this player at this article yet
-      if (!meetingLocations.has(myArticle)) {
+      // AND we are not on the end article (don't show "same page" when finishing)
+      if (!meetingLocations.has(myArticle) && myArticle !== endArticle) {
         console.log(`[Notification] Meeting ${player.name} at ${myArticle} (didNavigate: ${didNavigate})`);
 
         // Mark that we've met this player at this article
@@ -698,6 +655,46 @@ const Game = () => {
       }
     }
   }, [players, currentArticle, startArticle, isMultiplayer]);
+
+  // Countdown timer for non-finished players after someone finishes
+  // Countdown timer for non-finished players after someone finishes
+  useEffect(() => {
+    // Only run for multiplayer games when race has ended and current player hasn't finished
+    if (!isMultiplayer || !raceEndedAt || showVictoryModal || hasFinishedRef.current) {
+      return;
+    }
+
+    const notificationDelay = 3500; // Time to wait for notification to fade
+    const countdownDuration = 30; // 30 seconds
+
+    const updateCountdown = () => {
+      // Offset start time by notification delay so countdown effectively starts AFTER notification
+      const effectiveStartTime = raceEndedAt + notificationDelay;
+      const elapsed = (Date.now() - effectiveStartTime) / 1000;
+      const remaining = Math.max(0, countdownDuration - Math.floor(elapsed));
+      setEndGameCountdown(remaining);
+
+      // When countdown reaches 0, force show victory modal even if we haven't finished
+      if (remaining <= 0) {
+        setShowVictoryModal(true);
+        setShowCountdown(false);
+      }
+    };
+
+    // Show countdown notification (after finish notification fades)
+    const showCountdownTimer = setTimeout(() => {
+      updateCountdown(); // Initial update when showing
+      setShowCountdown(true);
+    }, notificationDelay);
+
+    // Update countdown every second
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(showCountdownTimer);
+    };
+  }, [isMultiplayer, raceEndedAt, showVictoryModal]);
 
   // Connect to multiplayer
   useEffect(() => {
@@ -1071,8 +1068,16 @@ const Game = () => {
   }, [players, isMultiplayer]);
 
   const handlePlayAgain = () => {
-    // Restart with same route
-    window.location.reload();
+    if (isMultiplayer && lobbyCode) {
+      // Navigate back to the same lobby
+      sessionStorage.removeItem("wiki-race-started-at");
+      sessionStorage.removeItem("wiki-race-player-name");
+      disconnect();
+      navigate(`/lobby?code=${lobbyCode}&player=${encodeURIComponent(playerName)}`);
+    } else {
+      // Solo mode: restart with same route
+      window.location.reload();
+    }
   };
 
   const handleNewRoute = () => {
@@ -1133,8 +1138,8 @@ const Game = () => {
             )?.name || playerName || "You"}
           />
         )}
-        {/* Finished players indicator */}
-        {isMultiplayer && finishedPlayers.length > 0 && (
+        {/* Finished players indicator - commented out per user request */}
+        {/* {isMultiplayer && finishedPlayers.length > 0 && (
           <div className="multiplayer-finished">
             <div className="multiplayer-finished-header">Finished</div>
             {finishedPlayers.map((p, i) => (
@@ -1145,7 +1150,7 @@ const Game = () => {
               </div>
             ))}
           </div>
-        )}
+        )} */}
         <SpeedrunWidget
           ref={speedrunWidgetRef}
           gameMode={isMultiplayer ? "Race" : "Single Player"}
@@ -1156,47 +1161,14 @@ const Game = () => {
           isMultiplayer={isMultiplayer}
         />
         <CountdownNotification
-          secondsLeft={countdownSeconds}
+          secondsLeft={endGameCountdown}
           visible={showCountdown}
         />
-        {/* Test button for countdown */}
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '60px',
-            right: '10px',
-            zIndex: 9999
-          }}
-        >
-          <button onClick={testCountdown}>Spawn Countdown</button>
-          <button
-            onClick={() => {
-              setNotificationPlayerName("TestPlayer");
-              setNotificationPlayerColor("#00aaff");
-              setNotificationType("same-page");
-              setShowNotification(true);
-            }}
-            style={{ marginTop: '4px' }}
-          >
-            Test Same Page
-          </button>
-          <button
-            onClick={() => {
-              setNotificationPlayerName("WinnerPlayer");
-              setNotificationPlayerColor("#ffaa00");
-              setNotificationType("finish");
-              setShowNotification(true);
-            }}
-            style={{ marginTop: '4px' }}
-          >
-            Test Target Reached
-          </button>
-        </div>
       </div>
-      {showVictoryModal && gameStats && (
+      {showVictoryModal && (gameStats || isMultiplayer) && (
         <VictoryModal
-          finalTime={gameStats.finalTime}
-          segments={gameStats.segments}
+          finalTime={gameStats?.finalTime || "DNF"}
+          segments={gameStats?.segments || []}
           startArticle={startArticle}
           endArticle={endArticle}
           players={mockPlayers.length > 0 ? mockPlayers : (
@@ -1205,13 +1177,13 @@ const Game = () => {
               name: playerName || "You",
               currentArticle: currentArticle,
               clicks: localClicks,
-              path: gameStats.segments.map(s => s.name),
-              finished: true,
-              finishTime: parseInt(gameStats.finalTime.split(':')[0]) * 60000 + parseFloat(gameStats.finalTime.split(':')[1]) * 1000
+              path: [], // No path data if we didn't finish
+              finished: false,
+              finishTime: 0
             }]
           )}
           messages={messages}
-          currentPlayerClicks={localClicks}
+          currentPlayerClicks={gameStats ? localClicks : localClicks}
           currentPlayerName={mockPlayers.length > 0 ? (playerName || "SwiftRunner42") : (players.find(p =>
             currentPlayerIdRef.current ? p.id === currentPlayerIdRef.current : p.name === playerName
           )?.name || playerName || "You")}
@@ -1226,6 +1198,9 @@ const Game = () => {
               timestamp: new Date()
             }]);
           }}
+          rank={gameStats ? (finishedPlayers.findIndex(p => p.playerId === (currentPlayerIdRef.current || 'local-player')) + 1) : undefined}
+          didFinish={!!gameStats}
+          totalPlayers={players.length}
         />
       )}
       <GameNotification
@@ -1236,12 +1211,13 @@ const Game = () => {
       />
 
       {/* Test button to toggle menu */}
-      <button
+      {/* Test button to toggle menu */}
+      {/* <button
         className="same-page-test-button same-page-test-button-menu"
         onClick={handleToggleMenu}
       >
         Show Menu
-      </button>
+      </button> */}
     </div>
   );
 };
